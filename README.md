@@ -1,4 +1,4 @@
-# Xiaobo-QL-Public [![Twitter](https://img.shields.io/twitter/follow/0xiaobo)](https://twitter.com/intent/follow?screen_name=0xiaobo)
+# Xiaobo-Task-Public [![Twitter](https://img.shields.io/twitter/follow/0xiaobo)](https://twitter.com/intent/follow?screen_name=0xiaobo)
 
 各种撸毛项目完成每日、每周任务，链上交互等。  
 推荐使用[青龙面板](https://github.com/whyour/qinglong)(建议debian版本)运行(自行学习安装使用)。  

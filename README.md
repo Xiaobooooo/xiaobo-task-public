@@ -37,17 +37,20 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 ### 项目环境变量
 
-| 环境变量名    | 变量介绍                  | 适用项目   |
-|----------|-----------------------|--------|
-| QNA3_RPC | 签到发送交易使用的RPC(默认opBNB) | Qna3签到 |
+| 环境变量名            | 变量介绍                        | 适用项目      |
+|------------------|-----------------------------|-----------|
+| QNA3_RPC         | 签到发送交易使用的RPC(默认opBNB)       | Qna3签到    |
+| ZETA_RPC         | 注册发送交易、链上交互任务使用RPC(默认公共RPC) | Zeta通用    |
+| ZETA_INVITE_CODE | 新地址注册XP时使用的邀请(默认空)          | Zeta_XP注册 |
 
 ## 已更新项目(点击项目名跳转项目入口)
 
-| 项目                                                            | 文本                   | 格式       | 功能    | 建议定时             |
-|---------------------------------------------------------------|----------------------|----------|-------|------------------|
-| [Qna3](https://qna3.ai/vote)                                  | Qna3Wallet.txt       | 地址----私钥 | 签到、领取 | 签到每天1次、领取一个月1-3次 |
-| [Ulti-Pilot](https://pilot.ultiverse.io/?inviteCode=8dKkU)    | UltiPilotAddress.txt | 地址----私钥 | 探索    | 早晚各1次            |
-| [Web3Go-Reiki](https://reiki.web3go.xyz?ref=80621285de961cb2) | Web3GoWallet.txt     | 地址----私钥 | 签到    | 每日一次             |
+| 项目                                                                                                                                                                                                                                                                                                                                                    | 文本                   | 格式       | 功能            | 建议定时             |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|----------|---------------|------------------|
+| [Qna3](https://qna3.ai/vote)                                                                                                                                                                                                                                                                                                                          | Qna3Wallet.txt       | 地址----私钥 | 签到、领取         | 签到每天1次、领取一个月1-3次 |
+| [Ulti-Pilot](https://pilot.ultiverse.io/?inviteCode=8dKkU)                                                                                                                                                                                                                                                                                            | UltiPilotAddress.txt | 地址----私钥 | 探索            | 早晚各1次            |
+| [Web3Go-Reiki](https://reiki.web3go.xyz?ref=80621285de961cb2)                                                                                                                                                                                                                                                                                         | Web3GoWallet.txt     | 地址----私钥 | 签到            | 每日一次             |
+| [Zeta-XP](https://hub.zetachain.com/zh-CN/xp?code=YWRkcmVzcz0weDgwQjhCZURCYjI1N2UxMjQ4MDljYUI2MzdmZUY0MDc3RTAyNDYzMTEmZXhwaXJhdGlvbj0xNzEyNzU3MjA0JnI9MHhmZWNmZTkzN2ZiNjJhNzMwMmIxMjU2Yzk4YjNiMWZjMzI4YzgxNmZjMGI0YTkxMzQ5YTJhYzllNzBkYWNmYmQ5JnM9MHgxNWZmNjA1MmJjYmQ1YjZjODM0NzJmNjc5ZDZmMGU2ZTc0MjNkY2Y5NWVlNWI4ZjUxMGE0ZDYzNDkwYzc5NDIyJnY9Mjg%3D) | ZetaWallet.txt       | 地址----私钥 | XP注册、部分链上交互任务 | 注册仅一次、交互一周一次     |
 
 ## 语言
 

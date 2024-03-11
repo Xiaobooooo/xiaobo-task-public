@@ -159,12 +159,12 @@ class QLTask(metaclass=ABCMeta):
         self.max_try = get_max_try()
         self.logger.info("=====配置读取完毕=====\n")
 
-        # if is_delay:
-        #     delay_min = get_delay_min()
-        #     delay_max = get_delay_max()
-        #     delay = random.randint(delay_min, delay_max + 1)
-        #     self.logger.info(f"随机延迟{delay}秒后开始运行任务")
-        #     time.sleep(delay)
+        if is_delay:
+            delay_min = get_delay_min()
+            delay_max = get_delay_max()
+            delay = random.randint(delay_min, delay_max + 1)
+            self.logger.info(f"随机延迟{delay}秒后开始运行任务")
+            time.sleep(delay)
 
     def run(self):
         self.logger.info(f"=====开始运行任务=====")

@@ -11,7 +11,7 @@ from requests import Session, Response
 from web3 import Web3, HTTPProvider
 
 from common.task import QLTask
-from common.util import LOCAL, clear_local, log, get_env, raise_error, get_session
+from common.util import LOCAL, log, get_env, raise_error, get_session
 
 TASK_NAME = 'Qna3_签到'
 FILE_NAME = 'Qna3Wallet.txt'
@@ -66,7 +66,6 @@ def check_in() -> str:
 
 
 class Task(QLTask):
-    @clear_local
     def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
         LOCAL.address = BSC.to_checksum_address(datas[0])
         LOCAL.private_key = datas[1]

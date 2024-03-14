@@ -7,7 +7,7 @@ from concurrent import futures
 import requests
 
 from common.notify import send
-from common.util import LOCK, load_txt, get_env, get_logger, TaskException, log
+from common.util import LOCK, load_txt, get_env, get_logger, TaskException, log, LOCAL
 
 ENV_THREAD_NUMBER = "THREAD_NUMBER"
 ENV_DELAY_MIN = "DELAY_MIN"
@@ -207,6 +207,7 @@ class QLTask(metaclass=ABCMeta):
             proxy = get_proxy(self.api_url, logger)
             try:
                 self.task(index, datas, proxy, logger, next_datas)
+                LOCAL.__dict__.clear()
                 return True
             except TaskException as e:
                 logger.error(f"任务失败({e.__traceback__.tb_next.tb_next.tb_lineno} - {repr(e)})")
@@ -216,6 +217,7 @@ class QLTask(metaclass=ABCMeta):
                 logger.error(f"第{try_num}次任务失败({e.__traceback__.tb_next.tb_next.tb_lineno} - {repr(e)})")
                 if try_num >= self.max_try:
                     self.fail_data.append(f"【{index + 1}】{e}")
+        LOCAL.__dict__.clear()
         return False
 
     def statistics(self):

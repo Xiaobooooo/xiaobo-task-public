@@ -8,13 +8,12 @@ from eth_account.messages import encode_defunct
 from web3 import Web3, HTTPProvider
 
 from common.task import QLTask
-from common.util import LOCAL, clear_local, get_session, raise_error
+from common.util import LOCAL, get_session, raise_error
 
 TASK_NAME = 'UltiPilot_探索'
 FILE_NAME = 'UltiPilotAddress.txt'
 
 BSC = Web3(HTTPProvider("https://opbnb-mainnet-rpc.bnbchain.org"))
-CHAIN_ID = BSC.eth.chain_id
 
 
 def up_raise_error(name, res):
@@ -111,7 +110,6 @@ def check() -> str:
 
 
 class Task(QLTask):
-    @clear_local
     def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
         LOCAL.address = BSC.to_checksum_address(datas[0])
         LOCAL.private_key = datas[1]

@@ -7,7 +7,7 @@ import time
 from web3 import Web3, HTTPProvider
 
 from common.task import QLTask
-from common.util import LOCAL, clear_local, get_session
+from common.util import LOCAL, get_session
 from HW_Qna3CheckIn import FILE_NAME, CONTRACT_ADDRESS, qna3_raise_error, login
 
 TASK_NAME = 'Qna3_领取'
@@ -51,7 +51,7 @@ def claim() -> str:
 
 
 class Task(QLTask):
-    @clear_local
+
     def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
         LOCAL.address = BSC.to_checksum_address(datas[0])
         LOCAL.private_key = datas[1]

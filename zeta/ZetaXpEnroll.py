@@ -12,7 +12,7 @@ from web3 import Web3, HTTPProvider
 from web3.exceptions import ContractLogicError
 
 from common.task import QLTask
-from common.util import log, get_env, get_session, raise_error, LOCAL, clear_local, TaskException
+from common.util import log, get_env, get_session, raise_error, LOCAL, TaskException
 
 TASK_NAME = 'Zeta_XP注册'
 FILE_NAME = 'ZetaWallet.txt'
@@ -88,7 +88,6 @@ def claim_xp(session: Session, task: str, address: ChecksumAddress, private_key:
 
 
 class Task(QLTask):
-    @clear_local
     def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
         LOCAL.address = ZETA.to_checksum_address(datas[0])
         LOCAL.private_key = datas[1]

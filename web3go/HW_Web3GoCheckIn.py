@@ -13,7 +13,7 @@ from tls_client import Session
 from web3 import Web3
 
 from common.task import QLTask
-from common.util import LOCAL, clear_local, get_session, raise_error
+from common.util import LOCAL, get_session, raise_error
 
 TASK_NAME = 'Web3Go_签到'
 FILE_NAME = 'Web3GoWallet.txt'
@@ -49,7 +49,6 @@ def check_in() -> str:
 
 
 class Task(QLTask):
-    @clear_local
     def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
         address = Web3.to_checksum_address(datas[0])
         private_key = datas[1]

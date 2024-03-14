@@ -17,15 +17,6 @@ logger.add(sys.stdout, format="<green>{time:HH:mm:ss}</green> | <level>{level: <
 log = logger.bind(name="Xiaobo_Task")
 
 
-def clear_local(original_func):
-    def wrapper(*args, **kwargs):
-        result = original_func(*args, **kwargs)
-        LOCAL.__dict__.clear()
-        return result
-
-    return wrapper
-
-
 class TaskException(Exception):
     def __init__(self, name, message):
         super().__init__(f"{name}: {message}")

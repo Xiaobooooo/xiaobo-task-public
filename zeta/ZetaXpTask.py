@@ -10,7 +10,7 @@ from web3 import Web3
 from web3.exceptions import ContractLogicError
 
 from common.task import QLTask
-from common.util import get_session, clear_local, LOCAL
+from common.util import get_session, LOCAL
 from ZetaXpEnroll import ZETA, claim_xp, refresh, FILE_NAME
 
 TASK_NAME = 'Zeta_交互'
@@ -94,7 +94,6 @@ def stake_zeta(address: ChecksumAddress, private_key: str) -> str:
 
 
 class Task(QLTask):
-    @clear_local
     def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
         address = ZETA.to_checksum_address(datas[0])
         private_key = datas[1]

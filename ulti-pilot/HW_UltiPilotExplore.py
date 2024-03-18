@@ -48,7 +48,7 @@ def query() -> int:
 
 def query_explore() -> dict:
     name = '查询探索'
-    res = LOCAL.session.get('https://pml.ultiverse.io/api/explore/list')
+    res = LOCAL.session.get('https://pml.ultiverse.io/api/explore/list?&active=true')
     explore_list = {}
     if res.text.count('success') and res.json().get('success'):
         for data in res.json().get('data'):
@@ -83,10 +83,27 @@ def explore() -> (str, list, int):
         data = data_json.get('data')
         signature = data_json.get('signature')
         nonce = BSC.eth.get_transaction_count(LOCAL.address)
+
         destinations_hex = hex(224 + (len(destinations) - 1) * 32).replace("0x", "")
         for i in range(64 - len(destinations_hex)):
             destinations_hex = f'0{destinations_hex}'
-        data = f'0x75278b5c00000000000000000000000000000000000000000000000000000000{hex(deadline).replace("0x", "")}0000000000000000000000000000000000000000000000000000000000{hex(voyage_id).replace("0x", "")}00000000000000000000000000000000000000000000000000000000000000a0{data.replace("0x", "")}{destinations_hex}000000000000000000000000000000000000000000000000000000000000000{len(destinations)}{"".join([f"000000000000000000000000000000000000000000000000000000000000000{i}" for i in destinations])}0000000000000000000000000000000000000000000000000000000000000041{signature.replace("0x", "")}00000000000000000000000000000000000000000000000000000000000000'
+
+        voyage_id_hex = hex(voyage_id).replace("0x", "")
+        for i in range(64 - len(voyage_id_hex)):
+            voyage_id_hex = f'0{voyage_id_hex}'
+
+        destinations_len_hex = hex(len(destinations)).replace("0x", "")
+        for i in range(64 - len(destinations_len_hex)):
+            destinations_len_hex = f'0{destinations_len_hex}'
+
+        destination_hexs = ''
+        for destination in destinations:
+            destination_hex = hex(destination).replace("0x", "")
+            for i in range(64 - len(destination_hex)):
+                destination_hex = f'0{destination_hex}'
+            destination_hexs += destination_hex
+
+        data = f'0x75278b5c00000000000000000000000000000000000000000000000000000000{hex(deadline).replace("0x", "")}{voyage_id_hex}00000000000000000000000000000000000000000000000000000000000000a0{data.replace("0x", "")}{destinations_hex}{destinations_len_hex}{destination_hexs}0000000000000000000000000000000000000000000000000000000000000041{signature.replace("0x", "")}00000000000000000000000000000000000000000000000000000000000000'
         tx = {'from': LOCAL.address, 'to': contract, 'nonce': nonce, 'data': data, 'gasPrice': int(BSC.eth.gas_price * 1.2)}
         tx['gas'] = BSC.eth.estimate_gas(tx)
         signed_tx = BSC.eth.account.sign_transaction(tx, LOCAL.private_key)

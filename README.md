@@ -10,10 +10,6 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 有BUG或需要更新的项目请准备好项目详细信息然后提交[issues](https://github.com/Xiaobooooo/xiaobo-ql-open/issues)
 
-## 低价推特账号
-
-便宜Twitter|X令牌号(可定制昵称、关注项目方等)：[XiaoboFaka](https://www.xiaobofaka.xyz/)
-
 ## 提示！！！
 
 代码比较烂，有能力的自行修改更新  

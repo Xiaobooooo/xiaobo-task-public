@@ -212,11 +212,11 @@ class QLTask(metaclass=ABCMeta):
                 LOCAL.__dict__.clear()
                 return True
             except TaskException as e:
-                logger.error(f"任务失败({e.__traceback__.tb_next.tb_next.tb_lineno} - {repr(e)})")
+                logger.error(f"任务失败({e.__traceback__.tb_next.tb_lineno} - {repr(e)})")
                 self.fail_data.append(f"【{index + 1}】{e}")
                 break
             except Exception as e:
-                logger.error(f"第{try_num}次任务失败({e.__traceback__.tb_next.tb_next.tb_lineno} - {repr(e)})")
+                logger.error(f"第{try_num}次任务失败({e.__traceback__.tb_next.tb_lineno} - {repr(e)})")
                 if try_num >= self.max_try:
                     self.fail_data.append(f"【{index + 1}】{e}")
         LOCAL.__dict__.clear()

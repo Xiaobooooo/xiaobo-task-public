@@ -8,7 +8,7 @@ from web3 import Web3, HTTPProvider
 
 from common.task import QLTask
 from common.util import LOCAL, get_session
-from HW_Qna3CheckIn import FILE_NAME, CONTRACT_ADDRESS, qna3_raise_error, login
+from Qna3CheckIn import FILE_NAME, CONTRACT_ADDRESS, qna3_raise_error, login
 
 TASK_NAME = 'Qna3_领取'
 

@@ -128,7 +128,7 @@ def json_get_value(json_data: dict | list, key: str = None) -> dict | list | str
                 json_data = json_data[int(key)]
             except:
                 return None
-    return None
+    return json_data
 
 
 def raise_error(name: str, response: Response, un_auths: list = None, msg_key: str = None):

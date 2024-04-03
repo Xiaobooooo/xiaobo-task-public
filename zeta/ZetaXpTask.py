@@ -1,5 +1,5 @@
 """
-cron: 0 10 * * 5
+cron: 0 10 * * 3,6
 new Env('Zeta_交互')
 """
 import random
@@ -123,14 +123,14 @@ class Task(QLTask):
             LOCAL.stake_tx = stake_zeta(address, private_key)
             logger.info(f'Stake Zeta交易Hash: {LOCAL.stake_tx}')
 
-        delay = random.randint(5, 10)
+        delay = random.randint(10, 15)
         logger.info(f'{delay}S后刷新任务')
         time.sleep(delay)
 
         result = refresh(LOCAL.session, address)
         logger.info(result)
 
-        delay = random.randint(3, 5)
+        delay = random.randint(5, 10)
         logger.info(f'{delay}S后领取XP')
         time.sleep(delay)
 

@@ -12,7 +12,7 @@ LOCK = threading.Lock()
 LOCAL = threading.local()
 
 logger.remove()
-logger.add(sys.stdout, format="<green>{time:HH:mm:ss}</green> | <level>{level: <5}</level> | "
+logger.add(sys.stdout, format="<green>{time:HH:mm:ss}</green> | <level>{level: <7}</level> | "
                               "<cyan>【{extra[name]}】</cyan> - <level>{message}</level>")
 log = logger.bind(name="Xiaobo_Task")
 

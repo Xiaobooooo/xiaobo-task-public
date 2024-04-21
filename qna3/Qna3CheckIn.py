@@ -78,13 +78,13 @@ class Task(QLTask):
             logger.info(f'登录: 成功')
             LOCAL.session.headers.update({'Authorization': f'Bearer {LOCAL.token}'})
         if query_check_in():
-            logger.info(f'签到: 今日已签到')
+            logger.success(f'签到: 今日已签到')
             return
         LOCAL.hash = send_check_in()
         logger.info(f'签到交易Hash: {LOCAL.hash}')
         time.sleep(3)
         result = check_in()
-        logger.info(result)
+        logger.success(result)
         time.sleep(2)
 
 

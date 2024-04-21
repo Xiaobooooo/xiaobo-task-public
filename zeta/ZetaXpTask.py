@@ -135,19 +135,19 @@ class Task(QLTask):
         time.sleep(delay)
 
         result = claim_xp(LOCAL.session, 'SEND_ZETA', address, private_key)
-        logger.info(result)
+        logger.success(result)
         result = claim_xp(LOCAL.session, 'RECEIVE_ZETA', address, private_key)
-        logger.info(result)
+        logger.success(result)
         result = claim_xp(LOCAL.session, 'RECEIVE_ETH', address, private_key)
-        logger.info(result)
+        logger.success(result)
         result = claim_xp(LOCAL.session, 'RECEIVE_BTC', address, private_key)
-        logger.info(result)
+        logger.success(result)
         result = claim_xp(LOCAL.session, 'RECEIVE_BNB', address, private_key)
-        logger.info(result)
+        logger.success(result)
         result = claim_xp(LOCAL.session, 'ACCUMULATED_FINANCE_DEPOSIT', address, private_key)
-        logger.info(result)
+        logger.success(result)
         result = claim_xp(LOCAL.session, 'ZETA_EARN_STAKE', address, private_key)
-        logger.info(result)
+        logger.success(result)
 
 
 if __name__ == '__main__':

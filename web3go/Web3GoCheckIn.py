@@ -61,7 +61,7 @@ class Task(QLTask):
             logger.info('登录: 成功')
             LOCAL.session.headers.update({'Authorization': f'Bearer {LOCAL.token}'})
         result = check_in()
-        logger.info(result)
+        logger.success(result)
 
 
 if __name__ == '__main__':

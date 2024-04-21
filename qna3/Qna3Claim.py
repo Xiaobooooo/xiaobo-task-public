@@ -72,7 +72,7 @@ class Task(QLTask):
         logger.info(f'领取交易Hash: {LOCAL.hash}')
         time.sleep(3)
         result = claim()
-        logger.info(result)
+        logger.success(result)
         time.sleep(2)
 
 

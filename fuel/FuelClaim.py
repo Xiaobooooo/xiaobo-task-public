@@ -54,7 +54,7 @@ class Task(QLTask):
                 resp = requests.post('https://api.yescaptcha.com/getTaskResult', json=payload)
                 if resp.text.count('gRecaptchaResponse'):
                     LOCAL.captcha = resp.json().get('solution').get('gRecaptchaResponse')
-                    logger.info(f"人机验证处理成功")
+                    logger.success(f"人机验证处理成功")
                     break
                 time.sleep(3)
             if hasattr(LOCAL, 'captcha') and LOCAL.captcha:
@@ -65,23 +65,22 @@ class Task(QLTask):
             LOCAL.session = get_session()
         LOCAL.session.proxies = proxy
         result = dispense()
-        logger.info(result)
-        return
+        logger.success(result)
 
 
 if __name__ == '__main__':
     CAPTCHA_KEY = get_env(ENV_YES_CAPTCHA_KEY)
     if not CAPTCHA_KEY:
-        log.info(f"未设置YesCaptchaKey环境变量，不运行此任务。")
+        log.error(f"未设置YesCaptchaKey环境变量，不运行此任务。")
     else:
         try:
             res = requests.post('https://api.yescaptcha.com/getBalance', json={'clientKey': CAPTCHA_KEY})
             if res.text.count('balance'):
-                log.info(f"当前YesCaptchaKey: {CAPTCHA_KEY}   余额: {res.json().get('balance')}")
+                log.success(f"当前YesCaptchaKey: {CAPTCHA_KEY}   余额: {res.json().get('balance')}")
                 Task(TASK_NAME, FILE_NAME).run()
             else:
-                log.info(
+                log.error(
                     f"YesCaptcha余额查询失败: {res.json().get('errorDescription') if res.text.count('errorDescription') else res.text}"
                 )
         except:
-            log.info(f"YesCaptcha余额查询失败")
+            log.error(f"YesCaptcha余额查询失败")

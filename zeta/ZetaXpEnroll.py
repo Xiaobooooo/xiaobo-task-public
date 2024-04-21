@@ -110,9 +110,9 @@ class Task(QLTask):
             result = refresh(LOCAL.session, LOCAL.address)
             logger.info(result)
             result = claim_xp(LOCAL.session, "WALLET_VERIFY", LOCAL.address, LOCAL.private_key)
-            logger.info(result)
+            logger.success(result)
             result = claim_xp(LOCAL.session, "WALLET_VERIFY_BY_INVITE", LOCAL.address, LOCAL.private_key)
-            logger.info(result)
+            logger.success(result)
         else:
             raise TaskException("注册", "注册认证失败")
 

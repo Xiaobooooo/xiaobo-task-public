@@ -165,7 +165,7 @@ class Task(QLTask):
                     else:
                         break
             if len(LOCAL.world_ids) < 1:
-                logger.info(f'没有可以探索的任务')
+                logger.success(f'没有可以探索的任务')
                 return
             logger.info(f'当前探索: {LOCAL.world_ids}')
         if not hasattr(LOCAL, 'voyage_id'):
@@ -178,7 +178,7 @@ class Task(QLTask):
             time.sleep(2.33)
 
         result = check()
-        logger.info(result)
+        logger.success(result)
 
 
 if __name__ == '__main__':

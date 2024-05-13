@@ -119,9 +119,6 @@ class Task(QLTask):
         if not hasattr(LOCAL, 'mint_tx'):
             LOCAL.mint_tx = mint_st_zeta(address, private_key)
             logger.info(f'Mint stZeta交易Hash: {LOCAL.mint_tx}')
-        if not hasattr(LOCAL, 'stake_tx'):
-            LOCAL.stake_tx = stake_zeta(address, private_key)
-            logger.info(f'Stake Zeta交易Hash: {LOCAL.stake_tx}')
 
         delay = random.randint(10, 15)
         logger.info(f'{delay}S后刷新任务')
@@ -145,8 +142,6 @@ class Task(QLTask):
         result = claim_xp(LOCAL.session, 'RECEIVE_BNB', address, private_key)
         logger.success(result)
         result = claim_xp(LOCAL.session, 'ACCUMULATED_FINANCE_DEPOSIT', address, private_key)
-        logger.success(result)
-        result = claim_xp(LOCAL.session, 'ZETA_EARN_STAKE', address, private_key)
         logger.success(result)
 
 

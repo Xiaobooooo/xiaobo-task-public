@@ -1,5 +1,5 @@
 """
-cron: 0 8 * * *
+cron: 0 8 * * 1
 new Env('GM_登录')
 """
 import time

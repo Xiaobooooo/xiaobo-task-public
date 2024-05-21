@@ -6,7 +6,7 @@ from common.task import QLTask
 from common.util import LOCAL, raise_error, get_session
 
 TASK_NAME = 'GM_签到'
-FILE_NAME = 'GMWallet.txt'
+FILE_NAME = 'GMWalletToken'
 
 
 def gm_raise_error(name, res):

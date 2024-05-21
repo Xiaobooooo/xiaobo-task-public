@@ -21,17 +21,17 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 ### 通用环境变量
 
-| 环境变量名                                                                                   | 变量介绍                                 | 
-|-----------------------------------------------------------------------------------------|--------------------------------------|
-| THREAD_NUMBER                                                                           | 线程数(默认5线程 )                          | 
-| DELAY_MIN                                                                               | 任务启动随机延迟最小数(默认300，单位秒)               | 
-| DELAY_MAX                                                                               | 任务启动随机延迟最大数(默认3600，单位秒)              |
-| DISABLE_DELAY                                                                           | 关闭随机延迟的项目名称，多个项目使用&连接                |
-| PROXY_API                                                                               | 代理提取API链接(协议: HTTP/HTTPS 格式: TXT)    |
-| DISABLE_PROXY                                                                           | 禁用代理的项目名称，多个项目使用&连接                  |
-| MAX_TRY                                                                                 | 任务尝试次数(默认3次)                         | 
-| [YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)                                      | YesCaptcha人机验证识别平台KEY，部分任务需要(Fuel领水) | 
-| [CAPTCHA_RUN_KEY](https://captcha.run/sso?inviter=4a6c9794-4159-4588-8686-f80958b6018c) | CaptchaRun人机验证识别平台KEY，部分任务需要(暂无)     | 
+| 环境变量名                                                                                   | 变量介绍                                      | 
+|-----------------------------------------------------------------------------------------|-------------------------------------------|
+| THREAD_NUMBER                                                                           | 线程数(默认5线程 )                               | 
+| DELAY_MIN                                                                               | 任务启动随机延迟最小数(默认300，单位秒)                    | 
+| DELAY_MAX                                                                               | 任务启动随机延迟最大数(默认3600，单位秒)                   |
+| DISABLE_DELAY                                                                           | 关闭随机延迟的项目名称，多个项目使用&连接                     |
+| PROXY_API                                                                               | 代理提取API链接(协议: HTTP/HTTPS 格式: TXT)         |
+| DISABLE_PROXY                                                                           | 禁用代理的项目名称，多个项目使用&连接                       |
+| MAX_TRY                                                                                 | 任务尝试次数(默认3次)                              | 
+| [YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)                                      | YesCaptcha人机验证识别平台KEY，部分任务需要(Fuel领水、GM登录) | 
+| [CAPTCHA_RUN_KEY](https://captcha.run/sso?inviter=4a6c9794-4159-4588-8686-f80958b6018c) | CaptchaRun人机验证识别平台KEY，部分任务需要(暂无)          | 
 
 ### 项目环境变量
 
@@ -43,13 +43,14 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 ## 已更新项目(点击项目名跳转项目入口)
 
-| 项目                                                                                                                                                                                                                                                                                                                                                    | 文本                   | 格式       | 功能            | 建议定时             |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------|----------|---------------|------------------|
-| [Qna3](https://qna3.ai/vote)                                                                                                                                                                                                                                                                                                                          | Qna3Wallet.txt       | 地址----私钥 | 签到、领取         | 签到每天1次、领取一个月1-3次 |
-| [Ulti-Pilot](https://pilot.ultiverse.io/?inviteCode=8dKkU)                                                                                                                                                                                                                                                                                            | UltiPilotAddress.txt | 地址----私钥 | 探索            | 早晚各1次            |
-| [Web3Go-Reiki](https://reiki.web3go.xyz?ref=80621285de961cb2)                                                                                                                                                                                                                                                                                         | Web3GoWallet.txt     | 地址----私钥 | 签到            | 每日一次             |
-| [Zeta-XP](https://hub.zetachain.com/zh-CN/xp?code=YWRkcmVzcz0weDgwQjhCZURCYjI1N2UxMjQ4MDljYUI2MzdmZUY0MDc3RTAyNDYzMTEmZXhwaXJhdGlvbj0xNzEyNzU3MjA0JnI9MHhmZWNmZTkzN2ZiNjJhNzMwMmIxMjU2Yzk4YjNiMWZjMzI4YzgxNmZjMGI0YTkxMzQ5YTJhYzllNzBkYWNmYmQ5JnM9MHgxNWZmNjA1MmJjYmQ1YjZjODM0NzJmNjc5ZDZmMGU2ZTc0MjNkY2Y5NWVlNWI4ZjUxMGE0ZDYzNDkwYzc5NDIyJnY9Mjg%3D) | ZetaWallet.txt       | 地址----私钥 | XP注册、部分链上交互任务 | 注册仅一次、交互一周一次     |
-| [Fuel](https://faucet-beta-5.fuel.network/)(需要[YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)处理人机验证)                                                                                                                                                                                                                                     | FuelWallet.txt       | 地址       | 领水            | 一天一次或任意          |
+| 项目                                                                                                                                                                                                                                                                                                                                                    | 文本                                     | 格式                                                  | 功能            | 建议定时             |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|-----------------------------------------------------|---------------|------------------|
+| [Qna3](https://qna3.ai/vote)                                                                                                                                                                                                                                                                                                                          | Qna3Wallet.txt                         | 地址----私钥                                            | 签到、领取         | 签到每天1次、领取一个月1-3次 |
+| [Ulti-Pilot](https://pilot.ultiverse.io/?inviteCode=8dKkU)                                                                                                                                                                                                                                                                                            | UltiPilotAddress.txt                   | 地址----私钥                                            | 探索            | 早晚各1次            |
+| [Web3Go-Reiki](https://reiki.web3go.xyz?ref=80621285de961cb2)                                                                                                                                                                                                                                                                                         | Web3GoWallet.txt                       | 地址----私钥                                            | 签到            | 每日一次             |
+| [Zeta-XP](https://hub.zetachain.com/zh-CN/xp?code=YWRkcmVzcz0weDgwQjhCZURCYjI1N2UxMjQ4MDljYUI2MzdmZUY0MDc3RTAyNDYzMTEmZXhwaXJhdGlvbj0xNzEyNzU3MjA0JnI9MHhmZWNmZTkzN2ZiNjJhNzMwMmIxMjU2Yzk4YjNiMWZjMzI4YzgxNmZjMGI0YTkxMzQ5YTJhYzllNzBkYWNmYmQ5JnM9MHgxNWZmNjA1MmJjYmQ1YjZjODM0NzJmNjc5ZDZmMGU2ZTc0MjNkY2Y5NWVlNWI4ZjUxMGE0ZDYzNDkwYzc5NDIyJnY9Mjg%3D) | ZetaWallet.txt                         | 地址----私钥                                            | XP注册、部分链上交互任务 | 注册仅一次、交互一周一次     |
+| [Fuel](https://faucet-beta-5.fuel.network/)(需要[YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)处理人机验证)                                                                                                                                                                                                                                               | FuelWallet.txt                         | 地址                                                  | 领水            | 一天一次或任意          |
+| [GM-Network](https://launchpad.gmnetwork.ai/mission?invite_code=Y5FBPE)(登录需要[YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)处理人机验证)                                                                                                                                                                                                                 | GMWallet.txt(登录) GMWalletToken.txt(签到) | 地址----私钥(GMWallet) 地址----私钥----Token(GMWalletToken) | 每日签到          | 签到一天一次、登录一周一次    |
 
 ## 语言
 

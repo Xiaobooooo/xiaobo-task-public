@@ -2,6 +2,8 @@
 cron: 1 1 1 1 1
 new Env('UltiPilot_空投查询')
 """
+import time
+
 from web3 import Web3
 
 from common.task import QLTask
@@ -13,13 +15,20 @@ FILE_NAME = 'UltiPilotAddress.txt'
 
 
 def query_airdrop() -> int:
-    name = '查询Soul'
-    res = LOCAL.session.get(f'https://rewards.ultiverse.io/api/token?wallet={LOCAL.address}')
+    name = '查询空投'
+    res = LOCAL.session.post(f'https://rewards.ultiverse.io/api/token?wallet={LOCAL.address}')
     if res.text.count('success') and res.json().get('success'):
         airdrop = 0
         for data in res.json().get('data'):
-            for details in data.get('details'):
-                airdrop += details.get('nftQuantities') + details.get('tokenQuantities')
+                if data.get('type') == 'nft':
+                    for details in data.get('details'):
+                        airdrop += details.get('nftQuantities') + details.get('tokenQuantities')
+                elif data.get('type') == 'soul':
+                    for details in data.get('details'):
+                        airdrop += details.get('soul')
+                else:
+                    airdrop += data.get('tokenQuantities')
+
         return airdrop
     up_raise_error(name, res)
 
@@ -42,9 +51,11 @@ class Task(QLTask):
             LOCAL.token = login()
             logger.info(f'登录: 成功')
             LOCAL.session.headers.update({
-                'Host': 'pml.ultiverse.io',
-                'ul-auth-address': LOCAL.address,
-                'ul-auth-token': LOCAL.token
+                'Host': 'rewards.ultiverse.io',
+                'Origin': 'https://rewards.ultiverse.io',
+                'Ultiverse_Authorization': LOCAL.token,
+                'current_time': str(int(time.time() * 1000)),
+                'Cookie': 'Ultiverse_Authorization=' + LOCAL.token,
             })
 
         airdrop = query_airdrop()

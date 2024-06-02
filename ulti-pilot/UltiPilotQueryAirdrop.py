@@ -11,25 +11,16 @@ from UltiPilotExplore import login, up_raise_error
 TASK_NAME = 'UltiPilot_空投查询'
 FILE_NAME = 'UltiPilotAddress.txt'
 
-def query() -> int:
+
+def query_airdrop() -> int:
     name = '查询Soul'
-    res = LOCAL.session.get('https://pml.ultiverse.io/api/profile')
+    res = LOCAL.session.get(f'https://rewards.ultiverse.io/api/token?wallet={LOCAL.address}')
     if res.text.count('success') and res.json().get('success'):
-        soul1 = int(int(res.json().get('data').get('soulInAccount')) / 1000000)
-        soul2 = int(int(res.json().get('data').get('soulInWallets')) / 1000000)
-        return soul1 + soul2
-    up_raise_error(name, res)
-
-
-def query_explore() -> dict:
-    name = '查询探索'
-    res = LOCAL.session.get('https://pml.ultiverse.io/api/explore/list?&active=true')
-    explore_list = {}
-    if res.text.count('success') and res.json().get('success'):
+        airdrop = 0
         for data in res.json().get('data'):
-            if not data.get('explored'):
-                explore_list.update({data.get('worldId'): data.get('soul')})
-        return explore_list
+            for details in data.get('details'):
+                airdrop += details.get('nftQuantities') + details.get('tokenQuantities')
+        return airdrop
     up_raise_error(name, res)
 
 

@@ -56,7 +56,7 @@ class Task(QLTask):
                 'ul-auth-token': LOCAL.token
             })
 
-        airdrop = query()
+        airdrop = query_airdrop()
         logger.info(f'当前Airdrop: {airdrop}')
         if airdrop > 0:
             write_txt('UP_Airdrop.txt', f'{datas[0]}----{datas[1]}----{airdrop}\n', True)

@@ -16,7 +16,7 @@ def gm_raise_error(name, res):
 def check_in() -> str:
     name = '签到'
     url = 'https://api-launchpad.gmnetwork.ai/task/auth/task/'
-    payload = {"task_id": "903134427101827116", "category": 200}
+    payload = {"task_id": "927775038817415593", "category": 200}
     res = LOCAL.session.post(url, json=payload)
     if res.text.count('success') and res.json().get('success'):
         return f'{name}: 成功'

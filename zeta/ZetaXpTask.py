@@ -27,8 +27,8 @@ ABI = [{"constant": False, "inputs": [{"internalType": "address", "name": "recip
 def send_zeta(address: ChecksumAddress, private_key: str) -> str:
     nonce = ZETA.eth.get_transaction_count(address)
     gas_price = ZETA.eth.gas_price
-    tx = {'from': address, 'to': address, 'value': Web3.to_wei(0.01, 'ether'), 'nonce': nonce, 'chainId': ZETA.eth.chain_id,
-          'maxFeePerGas': int(gas_price * 1.2), 'maxPriorityFeePerGas': int(gas_price * 1.1)}
+    tx = {'from': address, 'to': address, 'value': Web3.to_wei(0.1 + random.randint(1, 30) * 0.01, 'ether'), 'nonce': nonce,
+          'chainId': ZETA.eth.chain_id, 'maxFeePerGas': int(gas_price * 1.2), 'maxPriorityFeePerGas': int(gas_price * 1.1)}
     tx['gas'] = ZETA.eth.estimate_gas(tx)
     signed_tx = ZETA.eth.account.sign_transaction(tx, private_key)
     transaction = ZETA.eth.send_raw_transaction(signed_tx.rawTransaction)
@@ -107,15 +107,15 @@ class Task(QLTask):
         if not hasattr(LOCAL, 'zeta_tx'):
             LOCAL.zeta_tx = send_zeta(address, private_key)
             logger.info(f'转账ZETA交易Hash: {LOCAL.zeta_tx}')
-        if not hasattr(LOCAL, 'eth_tx'):
-            LOCAL.eth_tx = send_eth(address, private_key)
-            logger.info(f'转账ETH交易Hash: {LOCAL.eth_tx}')
-        if not hasattr(LOCAL, 'btc_tx'):
-            LOCAL.btc_tx = send_btc(address, private_key)
-            logger.info(f'转账BTC交易Hash: {LOCAL.btc_tx}')
-        if not hasattr(LOCAL, 'bnb_tx'):
-            LOCAL.bnb_tx = send_bnb(address, private_key)
-            logger.info(f'转账BNB交易Hash: {LOCAL.bnb_tx}')
+        # if not hasattr(LOCAL, 'eth_tx'):
+        #     LOCAL.eth_tx = send_eth(address, private_key)
+        #     logger.info(f'转账ETH交易Hash: {LOCAL.eth_tx}')
+        # if not hasattr(LOCAL, 'btc_tx'):
+        #     LOCAL.btc_tx = send_btc(address, private_key)
+        #     logger.info(f'转账BTC交易Hash: {LOCAL.btc_tx}')
+        # if not hasattr(LOCAL, 'bnb_tx'):
+        #     LOCAL.bnb_tx = send_bnb(address, private_key)
+        #     logger.info(f'转账BNB交易Hash: {LOCAL.bnb_tx}')
         if not hasattr(LOCAL, 'mint_tx'):
             LOCAL.mint_tx = mint_st_zeta(address, private_key)
             logger.info(f'Mint stZeta交易Hash: {LOCAL.mint_tx}')
@@ -135,12 +135,12 @@ class Task(QLTask):
         logger.success(result)
         result = claim_xp(LOCAL.session, 'RECEIVE_ZETA', address, private_key)
         logger.success(result)
-        result = claim_xp(LOCAL.session, 'RECEIVE_ETH', address, private_key)
-        logger.success(result)
-        result = claim_xp(LOCAL.session, 'RECEIVE_BTC', address, private_key)
-        logger.success(result)
-        result = claim_xp(LOCAL.session, 'RECEIVE_BNB', address, private_key)
-        logger.success(result)
+        # result = claim_xp(LOCAL.session, 'RECEIVE_ETH', address, private_key)
+        # logger.success(result)
+        # result = claim_xp(LOCAL.session, 'RECEIVE_BTC', address, private_key)
+        # logger.success(result)
+        # result = claim_xp(LOCAL.session, 'RECEIVE_BNB', address, private_key)
+        # logger.success(result)
         result = claim_xp(LOCAL.session, 'ACCUMULATED_FINANCE_DEPOSIT', address, private_key)
         logger.success(result)
 

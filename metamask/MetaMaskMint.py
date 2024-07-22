@@ -16,7 +16,7 @@ def task() -> str:
                "provider": "ORGANIZATION", "quantity": 1}
     res = LOCAL.session.post(url, json=payload)
     if res.text.count('Your items will be minted to your eth address'):
-        write_txt('MetaMaskMint成功', LOCAL.username)
+        write_txt('MetaMaskMint成功', LOCAL.username, True)
         return f'{name}: 成功'
     raise_error(name, res)
 

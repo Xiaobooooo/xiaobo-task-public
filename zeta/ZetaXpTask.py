@@ -27,7 +27,7 @@ ABI = [{"constant": False, "inputs": [{"internalType": "address", "name": "recip
 def send_zeta(address: ChecksumAddress, private_key: str) -> str:
     nonce = ZETA.eth.get_transaction_count(address)
     gas_price = ZETA.eth.gas_price
-    tx = {'from': address, 'to': address, 'value': Web3.to_wei(0.1 + random.randint(1, 30) * 0.01, 'ether'), 'nonce': nonce,
+    tx = {'from': address, 'to': address, 'value': Web3.to_wei(0.1 + random.randint(1, 50) * 0.002, 'ether'), 'nonce': nonce,
           'chainId': ZETA.eth.chain_id, 'maxFeePerGas': int(gas_price * 1.2), 'maxPriorityFeePerGas': int(gas_price * 1.1)}
     tx['gas'] = ZETA.eth.estimate_gas(tx)
     signed_tx = ZETA.eth.account.sign_transaction(tx, private_key)

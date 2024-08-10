@@ -15,7 +15,7 @@ FILE_NAME = 'HamsterKombatToken.txt'
 UPGRADE_MAX_LEVEL_NAME = 'HK_UPGRADE_MAX_LEVEL'
 upgrade_max_level = get_env(UPGRADE_MAX_LEVEL_NAME)
 if not upgrade_max_level:
-    log.info(f"暂未设置仓鼠快打邀请码变量[{UPGRADE_MAX_LEVEL_NAME}]，设置默认等级5")
+    log.info(f"暂未设置仓鼠快打最大升级变量[{UPGRADE_MAX_LEVEL_NAME}]，设置默认等级5")
     upgrade_max_level = 6
 else:
     upgrade_max_level = int(upgrade_max_level) + 1

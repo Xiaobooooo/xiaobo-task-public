@@ -173,8 +173,7 @@ class Task(QLTask):
         promos = get_promos()
 
         for promo_id, count in promos.items():
-            if not hasattr(LOCAL, 'client_token'):
-                LOCAL.client_token = get_client_token(promo_id, proxy)
+            LOCAL.client_token = get_client_token(promo_id, proxy)
             for i in range(count):
                 logger.info("正在生成Key，时间可能比较久")
                 key = get_key(promo_id, proxy)

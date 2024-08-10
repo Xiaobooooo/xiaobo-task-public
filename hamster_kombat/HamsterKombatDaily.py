@@ -121,7 +121,7 @@ def get_key(promo_id, proxy) -> str:
         'Authorization': f"Bearer {LOCAL.client_token}"
     })
     res = None
-    for i in range(50):
+    for i in range(66):
         payload = {"promoId": promo_id, "eventId": str(uuid.uuid4()), "eventOrigin": "undefined"}
         res = session.post("https://api.gamepromo.io/promo/register-event", json=payload)
         if res.text.count('hasCode') and res.json().get('hasCode'):

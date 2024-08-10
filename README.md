@@ -5,7 +5,7 @@
 青龙拉库命令(定时建议隔2-5小时拉取一次)
 
 ```
-ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify common
+ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify|expire common
 ```
 
 有BUG或需要更新的项目请准备好项目详细信息然后提交[issues](https://github.com/Xiaobooooo/xiaobo-ql-open/issues)
@@ -27,7 +27,7 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 | DELAY_MIN                                                                               | 任务启动随机延迟最小数(默认300，单位秒)                    | 
 | DELAY_MAX                                                                               | 任务启动随机延迟最大数(默认3600，单位秒)                   |
 | DISABLE_DELAY                                                                           | 关闭随机延迟的项目名称，多个项目使用&连接                     |
-| PROXY_API                                                                               | 代理提取API链接(协议: HTTP/HTTPS 格式: TXT)         |
+| PROXY_API                                                                               | 代理提取API链接(协议: HTTP/HTTPS 格式: TXT 分隔: 换行)  |
 | DISABLE_PROXY                                                                           | 禁用代理的项目名称，多个项目使用&连接                       |
 | MAX_TRY                                                                                 | 任务尝试次数(默认3次)                              | 
 | [YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)                                      | YesCaptcha人机验证识别平台KEY，部分任务需要(Fuel领水、GM登录) | 
@@ -37,8 +37,8 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 | 环境变量名            | 变量介绍                        | 适用项目      |
 |------------------|-----------------------------|-----------|
-| QNA3_RPC         | 签到发送交易使用的RPC(默认opBNB)       | Qna3签到    |
 | ZETA_RPC         | 注册发送交易、链上交互任务使用RPC(默认公共RPC) | Zeta通用    |
+| ZETA_INVITE_CODE | 新地址注册XP时使用的邀请(默认空)          | Zeta_XP注册 |
 | ZETA_INVITE_CODE | 新地址注册XP时使用的邀请(默认空)          | Zeta_XP注册 |
 
 ## 已更新项目(点击项目名跳转项目入口)

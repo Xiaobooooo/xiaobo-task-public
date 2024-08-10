@@ -109,18 +109,21 @@ def get_proxy_api(task_name: str) -> str:
     return api_url
 
 
-def get_proxy(api_url: str, logger) -> str:
+def get_proxy(api_url: str, logger, _proxies: list = None) -> str:
     """
     提取代理IP
     :param api_url: API链接
     :param logger: 日志输出
+    :param _proxies: 代理数组
     :return:
     """
+    if _proxies is None:
+        _proxies = proxies
     if not api_url:
         return ""
 
     with LOCK:
-        if len(proxies) <= 0:
+        if len(_proxies) <= 0:
             for try_num in range(MAX_TRY):
                 try:
                     res = requests.get(api_url)
@@ -129,7 +132,7 @@ def get_proxy(api_url: str, logger) -> str:
                         logger.error(f"API代理提取失败，请求响应: {res.text}")
                         raise Exception("代理提取失败")
                     else:
-                        [proxies.append(ip) for ip in ips]
+                        [_proxies.append(ip) for ip in ips]
                         break
                 except:
                     if try_num < MAX_TRY - 1:
@@ -137,9 +140,8 @@ def get_proxy(api_url: str, logger) -> str:
                         time.sleep(1)
                     else:
                         logger.error(f"API代理提取失败，请检查余额或是否已添加白名单")
-    proxy = proxies.pop(0) if len(proxies) > 0 else None
+    proxy = _proxies.pop(0) if len(_proxies) > 0 else None
     if proxy:
-        logger.info(f"使用代理: {proxy}")
         proxy = f"http://{proxy}"
     return proxy
 
@@ -207,6 +209,8 @@ class QLTask(metaclass=ABCMeta):
         for try_num in range(1, self.max_try + 1):
             logger.info(f"第{try_num}次运行任务: {datas[0]}")
             proxy = get_proxy(self.api_url, logger)
+            if proxy:
+                logger.info(f"使用代理: {proxy.split('//')[1]}")
             try:
                 self.task(index, datas, proxy, logger, next_datas)
                 LOCAL.__dict__.clear()
@@ -225,7 +229,7 @@ class QLTask(metaclass=ABCMeta):
     def statistics(self):
         """数据统计"""
         if self.fail_data:
-            log_data = "-----失败任务统计-----\n"
+            log_data = f"-----失败任务统计({len(self.fail_data)})-----\n"
             log_data += "\n".join([fail for fail in self.fail_data])
             self.logger.error(log_data)
 

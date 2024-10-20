@@ -2,7 +2,7 @@
 
 各种撸毛项目完成每日、每周任务，链上交互等。  
 推荐使用[青龙面板](https://github.com/whyour/qinglong)(建议debian版本)运行(自行学习安装使用)。  
-青龙拉库命令(定时建议隔2-5小时拉取一次)
+青龙拉库命令(定时建议隔3-8小时拉取一次)
 
 ```
 ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify|expire common

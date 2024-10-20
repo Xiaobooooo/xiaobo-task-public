@@ -1,20 +1,11 @@
-import os
-import sys
+import random
+import string
 import threading
 
-import requests
-import tls_client
-from loguru import logger
-from requests import Response
-from tls_client.settings import ClientIdentifiers
+import loguru
+from curl_cffi import requests
 
-LOCK = threading.Lock()
-LOCAL = threading.local()
-
-logger.remove()
-logger.add(sys.stdout, format="<green>{time:HH:mm:ss}</green> | <level>{level: <7}</level> | "
-                              "<cyan>【{extra[name]}】</cyan> - <level>{message}</level>")
-log = logger.bind(name="Xiaobo_Task")
+from common.constant import *
 
 
 class TaskException(Exception):
@@ -22,92 +13,23 @@ class TaskException(Exception):
         super().__init__(f"{name}: {message}")
 
 
-def get_logger(index: int | str = "Xiaobo_Task"):
-    return logger.bind(name=index)
+def get_logger(index: int | str = APPLICATION_NAME):
+    return loguru.logger.bind(name=index)
 
 
-def load_txt(file_name: str) -> list:
+def get_random_str(length: int = random.randint(8, 16)):
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+
+def load_dir(dir_name: str) -> list:
     """
     读取文本
-    :param file_name: 文件名
+    :param dir_name: 文件夹
     :return: 文本数组
     """
-    if not file_name.endswith(".txt"):
-        file_name += ".txt"
-    lines = []
-    log.info(f"正在读取文本<{file_name}>")
-    if not os.path.exists(file_name):
-        log.error(f"不存在<{file_name}>文本，请创建文件后重试")
-        sys.exit()
-    with open(sys.path[0] + "/" + file_name, "r+") as f:
-        while True:
-            line = f.readline().strip()
-            if line is None or line == "":
-                break
-            lines.append(line)
-    log.info(f"<{file_name}>文本读取完毕，总计数量: {len(lines)}")
-    return lines
-
-
-def write_txt(file_name: str, text: str, append: bool = False) -> bool:
-    """
-    写入文本
-    :param file_name: 文本名
-    :param text: 写入文本内容
-    :param append: 是否追加
-    :return: 写入结果
-    """
-    if not file_name.endswith(".txt"):
-        file_name += ".txt"
-    mode = "a+" if append else "w+"
-    log.info(f"正在写入文本<{file_name}>")
-    with LOCK:
-        try:
-            with open(sys.path[0] + "/" + file_name, mode) as f:
-                f.write(text)
-            log.info(f"<{file_name}>文本写入成功")
-            return True
-        except BaseException as e:
-            log.error(f"<{file_name}>文本写入失败: {repr(e)}")
-            return False
-
-
-def del_file(file_name: str) -> bool:
-    """
-    删除文本
-    :param file_name: 文件名
-    :return: 删除结果
-    """
-    if not file_name.endswith(".txt"):
-        file_name += ".txt"
-    log.info(f"正在删除<{file_name}>文件")
-    if os.path.isfile(file_name):
-        try:
-            os.remove(file_name)
-            return True
-        except BaseException as e:
-            log.error(f"文件删除失败:{repr(e)}")
-    else:
-        log.error(f"{file_name}不存在或是一个文件夹")
-    return False
-
-
-def get_env(env_name: str) -> str:
-    """
-    获取环境变量
-    :param env_name: 环境变量名
-    :return: 环境变量值
-    """
-    log.info(f"正在读取环境变量【{env_name}】")
-    try:
-        if env_name in os.environ:
-            env_val = os.environ[env_name]
-            if len(env_val) > 0:
-                log.info(f"读取到环境变量【{env_name}】")
-                return env_val
-    except Exception as e:
-        log.error(f"环境变量【{env_name}】读取失败: {repr(e)}")
-    return ""
+    files = os.listdir(f'{FILE_PATH}{dir_name}')
+    new_files = [f'{FILE_PATH}{dir_name}/{file}' for file in files]
+    return new_files
 
 
 def json_get_value(json_data: dict | list, key: str = None) -> dict | list | str | int | None:
@@ -131,7 +53,7 @@ def json_get_value(json_data: dict | list, key: str = None) -> dict | list | str
     return json_data
 
 
-def raise_error(name: str, response: Response, un_auths: list = None, msg_key: str = None):
+def raise_error(name: str, response: requests.Response, un_auths: list = None, msg_key: str = None):
     """
     获取响应中的错误消息，并抛出异常
     :param name: 操作
@@ -142,14 +64,14 @@ def raise_error(name: str, response: Response, un_auths: list = None, msg_key: s
     """
     msg = None
     text = response.text.strip()
-    un_login = ["未登录", "登录失效", "无效Token", "请先登录", "请登录" "unauthorized"]
+    un_login = ["未登录", "登录失效", "无效Token", "请先登录", "请登录", "unauthorized"]
     if un_auths:
         un_login.extend(un_auths)
     for un_auth in un_login:
         if text.lower().count(un_auth.lower()):
-            raise TaskException(name, "登录过期或被封禁、冻结")
+            raise TaskException(name, "登录过期，请重新登录")
 
-    body = response.json() if text.startswith("{") and text.endswith("}") else {}
+    body = response.json() if (text.startswith("{") and text.endswith("}") or text.startswith("[") and text.endswith("]")) else {}
     if body:
         if msg_key:
             msg = json_get_value(body, msg_key)
@@ -171,17 +93,72 @@ def raise_error(name: str, response: Response, un_auths: list = None, msg_key: s
     raise Exception(msg)
 
 
-def get_session(user_agent: str = None, is_tls: bool = True, client: ClientIdentifiers = "chrome_120", decode: str = None):
-    if not user_agent:
-        user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/12.0.0.0 Safari/537.36"
-    if is_tls:
-        session = tls_client.Session(client_identifier=client, random_tls_extension_order=True, additional_decode=decode)
+def get_session(proxy: str = None, timeout: int = 30, impersonate='chrome'):
+    return requests.Session(proxy=proxy, timeout=timeout, impersonate=impersonate)
+
+
+LOCK = threading.Lock()
+base_logger = get_logger()
+
+
+def load_txt(file_name: str) -> list:
+    """
+    读取文本
+    :param file_name: 文件名
+    :return: 文本数组
+    """
+    if not file_name.endswith(".txt"):
+        file_name += ".txt"
+    file_path = FILE_PATH + file_name
+    if not os.path.exists(file_path):
+        base_logger.error(f"不存在<{file_name}>文本")
+        return []
+    with open(file_path, "r+") as f:
+        lines = f.readlines()
+        lines = [line.strip() for line in lines if line.strip() != '']
+    base_logger.info(f"<{file_name}>文本读取完毕，总计数量: {len(lines)}")
+    return lines
+
+
+def write_txt(file_name: str, text: str, append: bool = False) -> bool:
+    """
+    写入文本
+    :param file_name: 文本名
+    :param text: 写入文本内容
+    :param append: 是否追加
+    :return: 写入结果
+    """
+    if not file_name.endswith(".txt"):
+        file_name += ".txt"
+    file_path = FILE_PATH + file_name
+    mode = "a+" if append else "w+"
+    with LOCK:
+        try:
+            with open(file_path, mode) as f:
+                f.write(text)
+            base_logger.info(f"<{file_name}>文本写入成功")
+            return True
+        except BaseException as e:
+            base_logger.error(f"<{file_name}>文本写入失败: {repr(e)}")
+            return False
+
+
+def del_file(file_name: str) -> bool:
+    """
+    删除文本
+    :param file_name: 文件名
+    :return: 删除结果
+    """
+    if not file_name.endswith(".txt"):
+        file_name += ".txt"
+    file_path = FILE_PATH + file_name
+    if os.path.isfile(file_path):
+        try:
+            os.remove(file_path)
+            base_logger.info(f"<{file_name}>文件删除成功")
+            return True
+        except BaseException as e:
+            base_logger.error(f"文件删除失败:{repr(e)}")
     else:
-        session = requests.session()
-    session.headers.update({"User-Agent": user_agent})
-    return session
-
-
-def get_android_session(user_agent: str = "okhttp/4.13.0", is_tls: bool = True,
-                        client: ClientIdentifiers = "okhttp4_android_13", decode: str = None):
-    return get_session(user_agent, is_tls, client, decode)
+        base_logger.error(f"{file_name}不存在或是一个文件夹")
+    return False

@@ -132,3 +132,6 @@ dmypy.json
 *.txt
 .idea/
 demo/
+tgs/
+data/
+*.env

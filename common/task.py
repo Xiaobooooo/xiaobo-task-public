@@ -1,29 +1,15 @@
-import random
 import re
 import time
-from abc import ABCMeta, abstractmethod
+
 from concurrent import futures
+from abc import ABCMeta, abstractmethod
 
-import requests
+from common.util import *
 
-from common.notify import send
-from common.util import LOCK, load_txt, get_env, get_logger, TaskException, log, LOCAL
+LOCK = threading.Lock()
+LOCAL = threading.local()
 
-ENV_THREAD_NUMBER = "THREAD_NUMBER"
-ENV_DELAY_MIN = "DELAY_MIN"
-ENV_DELAY_MAX = "DELAY_MAX"
-ENV_DISABLE_DELAY = "DISABLE_DELAY"
-ENV_PROXY_API = "PROXY_API"
-ENV_DISABLE_PROXY = "DISABLE_PROXY"
-ENV_MAX_TRY = "MAX_TRY"
-ENV_YES_CAPTCHA_KEY = 'YES_CAPTCHA_KEY'
-ENV_CAPTCHA_RUN_KEY = 'CAPTCHA_RUN_KEY'
-
-DELAY_MIN = 300
-DELAY_MAX = 3600
-MAX_TRY = 3
-
-proxies = []
+base_logger = get_logger()
 
 
 def get_thread_number(task_num: int) -> int:
@@ -32,62 +18,19 @@ def get_thread_number(task_num: int) -> int:
     :param task_num: 任务数量
     :return: 线程数
     """
-    thread_num = 5
-    value = get_env(ENV_THREAD_NUMBER)
-    if value != "":
-        try:
-            thread_num = int(value)
-        except:
-            log.info(f"线程数设置有误，设置默认数量{thread_num}")
+    value = os.getenv(ENV_THREAD_NUMBER)
+    if value and value.isdigit():
+        return int(value)
     else:
-        log.info(f"暂未设置线程数，设置默认数量{thread_num}")
+        thread_num = THREAD_NUMBER
+        base_logger.info(f"暂未设置线程数或设置有误，设置默认数量{thread_num}")
     if thread_num > task_num:
         thread_num = task_num
-        log.info(f"线程数量大于任务数量，设置任务数量{task_num}")
+        base_logger.info(f"线程数量大于任务数量，设置任务数量{thread_num}")
     if thread_num < 1:
         thread_num = 1
-        log.info("线程数量不能小于0，设置最低数量1")
+        base_logger.info(f"线程数量不能小于1，设置最低数量{thread_num}")
     return thread_num
-
-
-def get_disable_delay(task_name: str) -> int:
-    disable = get_env(ENV_DISABLE_DELAY)
-    items = disable.split("&")
-    if task_name in items:
-        return False
-    return True
-
-
-def get_max_try() -> int:
-    value = get_env(ENV_MAX_TRY)
-    if value:
-        try:
-            return int(value)
-        except:
-            log.info(f"尝试次数设置有误，设置默认次数{MAX_TRY}")
-    else:
-        log.info(f"暂未设置尝试次数，设置默认次数{MAX_TRY}")
-    return MAX_TRY
-
-
-def get_delay_min() -> int:
-    value = get_env(ENV_DELAY_MIN)
-    if value:
-        try:
-            return int(value)
-        except:
-            log.info(f"最小延迟设置有误，设置默认最小延迟{MAX_TRY}")
-    return DELAY_MIN
-
-
-def get_delay_max() -> int:
-    value = get_env(ENV_DELAY_MAX)
-    if value:
-        try:
-            return int(value)
-        except:
-            log.info(f"最大延迟设置有误，设置默认最大延迟{MAX_TRY}")
-    return DELAY_MAX
 
 
 def get_proxy_api(task_name: str) -> str:
@@ -96,20 +39,53 @@ def get_proxy_api(task_name: str) -> str:
     :param task_name: 任务名
     :return: API链接
     """
-    api_url = ""
-    disable = get_env(ENV_DISABLE_PROXY)
+    disable = os.getenv(ENV_DISABLE_PROXY)
     if task_name and disable:
         items = disable.split("&")
         if task_name in items:
-            log.info("当前任务已设置禁用代理")
-            return api_url
-    api_url = get_env(ENV_PROXY_API)
+            base_logger.info("当前任务已设置禁用代理")
+            return ''
+    api_url = os.getenv(ENV_PROXY_API)
     if not api_url:
-        log.info("暂未设置代理API，不使用代理")
+        base_logger.info("暂未设置代理API，不使用代理")
     return api_url
 
 
-def get_proxy(api_url: str, logger, _proxies: list = None) -> str:
+def get_max_try() -> int:
+    value = os.getenv(ENV_MAX_TRY)
+    if value and value.isdigit():
+        return int(value)
+    base_logger.info(f"暂未设置尝试次数或设置有误，设置默认次数{MAX_TRY}")
+    return MAX_TRY
+
+
+def is_exist(env_name: str, task_name: str) -> int:
+    disable_items = os.getenv(env_name)
+    if not disable_items:
+        return True
+    items = disable_items.split("&")
+    if task_name in items:
+        return False
+    return True
+
+
+def get_delay_min() -> int:
+    value = os.getenv(ENV_DELAY_MIN)
+    if value and value.isdigit():
+        return int(value)
+    base_logger.info(f"暂未设置最小延迟或最设置有误，设置默认最小延迟{DELAY_MIN}")
+    return DELAY_MIN
+
+
+def get_delay_max() -> int:
+    value = os.getenv(ENV_DELAY_MAX)
+    if value and value.isdigit():
+        return int(value)
+    base_logger.info(f"暂未设置最大延迟或最设置有误，设置默认最大延迟{DELAY_MAX}")
+    return DELAY_MAX
+
+
+def get_proxy(api_url: str, logger, _proxies: list) -> str:
     """
     提取代理IP
     :param api_url: API链接
@@ -117,8 +93,6 @@ def get_proxy(api_url: str, logger, _proxies: list = None) -> str:
     :param _proxies: 代理数组
     :return:
     """
-    if _proxies is None:
-        _proxies = proxies
     if not api_url:
         return ""
 
@@ -129,6 +103,8 @@ def get_proxy(api_url: str, logger, _proxies: list = None) -> str:
                     res = requests.get(api_url)
                     ips = re.findall("(?:\d+\.){3}\d+:\d+", res.text)
                     if len(ips) < 1:
+                        ips = re.findall("(\S+:\S+@\S+:\d+)", res.text)
+                    if len(ips) < 1:
                         logger.error(f"API代理提取失败，请求响应: {res.text}")
                         raise Exception("代理提取失败")
                     else:
@@ -136,48 +112,64 @@ def get_proxy(api_url: str, logger, _proxies: list = None) -> str:
                         break
                 except:
                     if try_num < MAX_TRY - 1:
-                        logger.error(f"API代理提取失败，1秒后第{try_num + 1}次重试")
-                        time.sleep(1)
+                        logger.error(f"API代理提取失败，请检查余额或是否已添加白名单，3秒后第{try_num + 1}次重试")
+                        time.sleep(3)
                     else:
                         logger.error(f"API代理提取失败，请检查余额或是否已添加白名单")
+
     proxy = _proxies.pop(0) if len(_proxies) > 0 else None
     if proxy:
         proxy = f"http://{proxy}"
     return proxy
 
 
-class QLTask(metaclass=ABCMeta):
-    def __init__(self, task_name: str, file_name: str):
+class BaseTask(metaclass=ABCMeta):
+    def __init__(self, task_name: str, file_name: str, is_delay: bool = True, shuffle: bool = True):
         self.task_name = task_name
         self.file_name = file_name
-        self.success = 0
+        self.is_delay = is_delay
+        self.shuffle = shuffle
+
+        self.task_count = 0
+        self.success_count = 0
         self.fail_data = []
-        self.logger = log
+        self.logger = get_logger()
+        self.thread_num = THREAD_NUMBER
+        self.max_try = MAX_TRY
+        self.proxy_api = ''
+        self.proxies = []
 
         self.logger.info("=====开始读取配置=====")
-        self.lines = load_txt(self.file_name)
-        self.total = len(self.lines)
-        self.thread_num = get_thread_number(self.total)
-        is_delay = get_disable_delay(self.task_name)
-        self.api_url = get_proxy_api(self.task_name)
-        self.max_try = get_max_try()
+        self.load_config()
         self.logger.info("=====配置读取完毕=====\n")
 
-        if is_delay:
+        if self.is_delay and os.getenv(ENV_ENVIRONMENT) != 'dev':
             delay_min = get_delay_min()
             delay_max = get_delay_max()
             delay = random.randint(delay_min, delay_max + 1)
             self.logger.info(f"随机延迟{delay}秒后开始运行任务")
             time.sleep(delay)
 
+    def load_config(self):
+        self.thread_num = get_thread_number(self.task_count)
+        self.proxy_api = get_proxy_api(self.task_name)
+        self.max_try = get_max_try()
+        self.shuffle = is_exist(ENV_DISABLE_SHUFFLE, self.task_name)
+        if self.is_delay:
+            self.is_delay = is_exist(ENV_DISABLE_DELAY, self.task_name)
+
     def run(self):
+        if self.task_count < 1:
+            self.logger.error("任务数量为0，程序退出")
+            return
+
         self.logger.info(f"=====开始运行任务=====")
         with futures.ThreadPoolExecutor(max_workers=self.thread_num) as pool:
-            tasks = [pool.submit(self.main, index) for index in range(self.total)]
+            tasks = [pool.submit(self.main, index) for index in range(self.task_count)]
             futures.wait(tasks)
             for future in futures.as_completed(tasks):
                 if future.result():
-                    self.success += 1
+                    self.success_count += 1
         self.logger.info(f"=====任务运行完毕=====\n")
 
         self.logger.info("=====开始统计数据=====")
@@ -188,11 +180,38 @@ class QLTask(metaclass=ABCMeta):
         self.save()
         self.logger.info("=====文本保存完毕=====\n")
 
-        push_data = self.get_push_data()
-        if push_data:
-            self.logger.info(f"=====开始推送消息=====")
-            send(self.task_name, push_data)
-            self.logger.info(f"=====消息推送完毕=====")
+    @abstractmethod
+    def main(self, index: int) -> bool:
+        """
+        主逻辑
+        :param index: 索引
+        :return: 是否成功
+        """
+
+    def statistics(self):
+        """数据统计"""
+        if self.fail_data:
+            log_data = f"-----失败任务统计({len(self.fail_data)})-----\n"
+            log_data += "\n".join([fail for fail in self.fail_data])
+            self.logger.error(log_data)
+
+    def save(self):
+        """保存数据"""
+
+
+class QLTask(BaseTask):
+    def __init__(self, task_name: str, file_name: str, is_delay: bool = True, shuffle: bool = True, disable_task_proxy: bool = False):
+        self.lines = []
+        super().__init__(task_name, file_name, is_delay, shuffle)
+        if self.shuffle:
+            random.shuffle(self.lines)
+        if disable_task_proxy is True:
+            self.proxy_api = None
+
+    def load_config(self):
+        self.lines = load_txt(self.file_name)
+        self.task_count = len(self.lines)
+        super().load_config()
 
     def main(self, index: int) -> bool:
         """
@@ -202,55 +221,38 @@ class QLTask(metaclass=ABCMeta):
         """
         logger = get_logger(index + 1)
         datas = self.lines[index].strip().split("----")
-        if index + 1 >= self.total:
-            next_datas = self.lines[0].strip().split("----")
-        else:
-            next_datas = self.lines[index + 1].strip().split("----")
         for try_num in range(1, self.max_try + 1):
             logger.info(f"第{try_num}次运行任务: {datas[0]}")
-            proxy = get_proxy(self.api_url, logger)
+            proxy = get_proxy(self.proxy_api, logger, self.proxies)
             if proxy:
                 logger.info(f"使用代理: {proxy.split('//')[1]}")
             try:
-                self.task(index, datas, proxy, logger, next_datas)
+                self.task(index, datas, proxy, logger)
                 LOCAL.__dict__.clear()
                 return True
             except TaskException as e:
-                logger.error(f"任务失败({e.__traceback__.tb_next.tb_lineno} - {repr(e)})")
-                self.fail_data.append(f"【{index + 1}】{e}")
+                tb_next = e.__traceback__.tb_next.tb_next
+                if not tb_next:
+                    tb_next = e.__traceback__.tb_next
+                logger.error(f"任务失败({tb_next.tb_lineno} - {e})")
+                self.fail_data.append(f"【{index + 1}】{datas[0]}----{e}")
                 break
             except Exception as e:
-                logger.error(f"第{try_num}次任务失败({e.__traceback__.tb_next.tb_lineno} - {repr(e)})")
+                tb_next = e.__traceback__.tb_next.tb_next
+                if not tb_next:
+                    tb_next = e.__traceback__.tb_next
+                logger.error(f"第{try_num}次任务失败({tb_next.tb_lineno} - {repr(e)})")
                 if try_num >= self.max_try:
-                    self.fail_data.append(f"【{index + 1}】{e}")
+                    self.fail_data.append(f"【{index + 1}】{datas[0]}----{e}")
         LOCAL.__dict__.clear()
         return False
 
-    def statistics(self):
-        """数据统计"""
-        if self.fail_data:
-            log_data = f"-----失败任务统计({len(self.fail_data)})-----\n"
-            log_data += "\n".join([fail for fail in self.fail_data])
-            self.logger.error(log_data)
-
-    def get_push_data(self) -> str:
-        """
-        推送数据
-        :return: 推送数据
-        """
-        return f"总任务数: {self.total}\n任务成功数: {self.success}\n任务失败数: {len(self.fail_data)}"
-
-    def save(self):
-        """保存数据"""
-
     @abstractmethod
-    def task(self, index: int, datas: list, proxy: str, logger, next_datas: list) -> str or None:
+    def task(self, index: int, datas: list[str], proxy: str, logger):
         """
         任务
-        :param index: 序号
+        :param index: 索引
         :param datas: 数据
         :param proxy: 代理
-        :param logger: 日志输出
-        :param next_datas: 下一条数据
-        :return: 是否成功
+        :param logger: 日志
         """

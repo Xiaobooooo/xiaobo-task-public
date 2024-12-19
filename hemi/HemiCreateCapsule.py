@@ -8,11 +8,10 @@ from web3.exceptions import ContractLogicError
 
 from common.task import QLTask, LOCAL
 from common.util import get_session, raise_error, get_random_str
+from HemiSwap import HEMI
 
 TASK_NAME = 'Hemi_CreateCapsule'
 FILE_NAME = 'HemiWallet.txt'
-
-HEMI = Web3(HTTPProvider("https://int02.testnet.rpc.hemi.network/rpc"))
 
 CONTRACT_ADDRESS = Web3.to_checksum_address('0x1E8db2Fc15Bf1207784763219e00e98D0BA82362')
 ABI = [{"stateMutability": "payable", "type": "function", "inputs": [
@@ -47,8 +46,9 @@ class Task(QLTask):
         gas_price = HEMI.eth.gas_price
         nonce = HEMI.eth.get_transaction_count(account.address)
         try:
-            execute = CONTRACT.functions.shipPackage([[], token_url], ["0x0000000000000000000000000000000000000000000000000000000000000000", 0,
-                                                                       Web3.to_checksum_address("0x0000000000000000000000000000000000000000"), 0],
+            execute = CONTRACT.functions.shipPackage([[], token_url],
+                                                     ["0x0000000000000000000000000000000000000000000000000000000000000000", 0,
+                                                      Web3.to_checksum_address("0x0000000000000000000000000000000000000000"), 0],
                                                      account.address)
             tx = execute.build_transaction(
                 {'from': account.address, 'value': Web3.to_wei(0.001, 'ether'), 'gasPrice': int(gas_price * 1.1), 'nonce': nonce}

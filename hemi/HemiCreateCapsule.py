@@ -3,7 +3,7 @@ name: Hemi_CreateCapsule
 cron: 0 12 * * * 3,6
 """
 import web3
-from web3 import Web3, HTTPProvider
+from web3 import Web3
 from web3.exceptions import ContractLogicError
 
 from common.task import QLTask, LOCAL

@@ -39,46 +39,38 @@ TOKEN_ABI = [{"constant": True, "inputs": [{"name": "_owner", "type": "address"}
               "outputs": [{"internalType": "bool", "name": "", "type": "bool"}], "stateMutability": "nonpayable", "type": "function"}]
 TOKEN_CONTRACT = HEMI.eth.contract(address=Web3.to_checksum_address(TOKEN_CONTRACT_ADDRESS), abi=TOKEN_ABI)
 
+WETH_ADDRESS = Web3.to_checksum_address("0x0C8aFD1b58aa2A5bAd2414B861D8A7fF898eDC3A")
+
 
 class Task(QLTask):
     def task(self, index: int, datas: list[str], proxy: str, logger):
         private_key = datas[1]
         account = web3.Account.from_key(private_key)
-        gas_price = int(HEMI.eth.gas_price * 1.2)
+        gas_price = int(HEMI.eth.gas_price * 1.5)
         nonce = HEMI.eth.get_transaction_count(account.address)
-        # balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
+        balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
         try:
-            # if balance > Web3.to_wei(30_000, "ether"):
-            #     hex_value = Web3.to_hex(balance)
-            #     execute = CONTRACT.functions.execute("0x0a000c00", (
-            #         f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}",
-            #         f"0x0000000000000000000000000000000000000000000000000000000000000001{hex_value.zfill(64)}000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b0c8afd1b58aa2a5bad2414b861d8a7ff898edc3a000bb8ec46e0efb2ea8152da0327a5eb3ff9a43956f13e000000000000000000000000000000000000000000"
-            #     ), int(time.time() + 120))
-            #     tx = execute.build_transaction(
-            #         {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
-            #     )
-            # else:
-            #     random_value = random.uniform(0.00001, 0.001)
-            #     hex_value = Web3.to_hex(Web3.to_wei(random_value, "ether"))
-            #     execute = CONTRACT.functions.execute("0x0b00", (
-            #     Web3.to_bytes(text=f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}"),
-            #     Web3.to_bytes(
-            #         text=f"0x0000000000000000000000000000000000000000000000000000000000000001{hex_value.zfill(64)}000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b0c8afd1b58aa2a5bad2414b861d8a7ff898edc3a000bb8ec46e0efb2ea8152da0327a5eb3ff9a43956f13e000000000000000000000000000000000000000000")),
-            #                                          int(time.time() + 120))
-            #     tx = execute.build_transaction(
-            #         {'from': account.address, 'value': Web3.to_wei(random_value, 'ether'), 'gasPrice': gas_price, 'nonce': nonce}
-            #     )
-            execute = CONTRACT.functions.execute("0x0b00", (
-                "0x000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000005af3107a4000",
-                "0x000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000005af3107a4000000000000000000000000000000000000000000000000000457fd60a0614bb5400000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b0c8afd1b58aa2a5bad2414b861d8a7ff898edc3a000bb8ec46e0efb2ea8152da0327a5eb3ff9a43956f13e000000000000000000000000000000000000000000"
-            ), int(time.time() + 120))
-            tx = execute.build_transaction(
-                {'from': account.address, 'value': Web3.to_wei(0.0001, 'ether'), 'gasPrice': gas_price, 'nonce': nonce}
-            )
+            if balance > Web3.to_wei(30_000, "ether"):
+                hex_value = Web3.to_hex(Web3.to_wei(balance, "ether")).replace('0x', '')
+                bytes_amount = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}"
+                bytes_path = f"0x0000000000000000000000000000000000000000000000000000000000000001{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}000bb8{WETH_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
+                execute = CONTRACT.functions.execute("0x0b00", (bytes_amount, bytes_path), int(time.time() + 120))
+                tx = execute.build_transaction(
+                    {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
+                )
+            else:
+                random_value = random.uniform(0.00001, 0.001)
+                hex_value = Web3.to_hex(Web3.to_wei(random_value, "ether")).replace('0x', '')
+                bytes_amount = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}"
+                bytes_path = f"0x0000000000000000000000000000000000000000000000000000000000000001{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b{WETH_ADDRESS.lower().replace('0x', '')}000bb8{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
+                execute = CONTRACT.functions.execute("0x0b00", (bytes_amount, bytes_path), int(time.time() + 120))
+                tx = execute.build_transaction(
+                    {'from': account.address, 'value': Web3.to_wei(random_value, 'ether'), 'gasPrice': gas_price, 'nonce': nonce}
+                )
         except ContractLogicError as e:
             logger.error(f'Swap交易检测失败: {e}')
             return
-
+        tx['gas'] = HEMI.eth.estimate_gas(tx)
         signed_tx = HEMI.eth.account.sign_transaction(tx, private_key)
         transaction = HEMI.eth.send_raw_transaction(signed_tx.raw_transaction)
         logger.success(f"Swap交易发送成功: 0x{transaction.hex()}")

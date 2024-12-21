@@ -52,8 +52,7 @@ class Task(QLTask):
         nonce = HEMI.eth.get_transaction_count(account.address)
         balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
         try:
-            # if balance > Web3.to_wei(30_000, "ether"):
-            if balance > Web3.to_wei(1, "ether"):
+            if balance > Web3.to_wei(30_000, "ether"):
                 logger.info("HDAI TO ETH")
                 hex_value = Web3.to_hex(balance).replace('0x', '')
                 timestamp = int(time.time() + 60000)

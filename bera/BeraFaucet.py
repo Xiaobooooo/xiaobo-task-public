@@ -25,6 +25,8 @@ def claim() -> str:
         return f'{name}: 领取限制时间中'
     if res.text.count('Invalid captcha token'):
         return f'{name}: 无效的验证'
+    if res.status_code == 402:
+        return f'{name}: 无法领水，ETH主网余额不足0.001 ETH '
     raise_error(name, res)
 
 

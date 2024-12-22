@@ -34,17 +34,19 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 ### 项目环境变量
 
-| 环境变量名 | 变量介绍 | 适用项目 |
-|-------|------|------|
-| -     | -    | -    |
+| 环境变量名           | 变量介绍     | 适用项目                         |
+|-----------------|----------|------------------------------|
+| YES_CAPTCHA_KEY | 人机验证解决方案 | Bera_领水                      |
+| HEMI_RPC        | Hemi链RPC | Hemi_Swap、Hemi_CreateCapsule |
 
 ## 已更新项目(点击项目名跳转项目入口)
 
 ### 有效项目
 
-| 项目                                                                  | 文本             | 格式       | 功能           | 
-|---------------------------------------------------------------------|----------------|----------|--------------|
-| [Hemi_交互](https://points.absinthe.network/hemi/start)(邀请码:ecd5454c) | HemiWallet.txt | 地址----私钥 | Hemi部分链上交互任务 | 
+| 项目                                                                                                            | 文本             | 格式(一行一个) | 功能           | 
+|---------------------------------------------------------------------------------------------------------------|----------------|----------|--------------|
+| [Hemi_交互](https://points.absinthe.network/hemi/start)(邀请码:ecd5454c)                                           | HemiWallet.txt | 地址----私钥 | Hemi部分链上交互任务 | 
+| [Bera_领水](https://bartio.faucet.berachain.com/)(登录需要[YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)处理人机验证) | BeraWallet.txt | 地址       | 熊链领水         | 
 
 ### 无效项目
 

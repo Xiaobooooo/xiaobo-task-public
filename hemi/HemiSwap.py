@@ -21,7 +21,7 @@ FILE_NAME = 'HemiWallet.txt'
 RPC_NAME = 'HEMI_RPC'
 rpc = os.getenv(RPC_NAME)
 if not rpc:
-    get_logger().info(f"暂未设置熊链RPC环境变量[{RPC_NAME}]")
+    get_logger().info(f"暂未设置Hemi链RPC环境变量[{RPC_NAME}]")
     rpc = "https://testnet.rpc.hemi.network/rpc"
 
 HEMI = Web3(HTTPProvider(rpc))

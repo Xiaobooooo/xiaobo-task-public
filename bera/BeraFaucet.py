@@ -118,7 +118,7 @@ if __name__ == '__main__':
             if cap_res.text.count('balance'):
                 base_logger.success(
                     f"当前{'YesCaptchaKey' if YES_CAPTCHA_KEY else 'CaptchaRunKey'}: {YES_CAPTCHA_KEY if YES_CAPTCHA_KEY else CAPTCHA_RUN_KEY}   余额: {cap_res.json().get('balance')}")
-                Task(TASK_NAME, FILE_NAME).run()
+                Task(TASK_NAME, FILE_NAME, is_delay=False).run()
             else:
                 base_logger.error(
                     f"{'YesCaptchaKey' if YES_CAPTCHA_KEY else 'CaptchaRunKey'}余额查询失败: {cap_res.json().get('errorDescription') if cap_res.text.count('errorDescription') else cap_res.text}"

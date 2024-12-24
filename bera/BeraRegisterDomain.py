@@ -1,9 +1,8 @@
 """
-cron: 0 10 * * *
+cron: 1 1 1 1 1
 new Env('Bera_注册域名')
 """
 import os
-import time
 
 import requests
 import web3
@@ -13,7 +12,7 @@ from web3.exceptions import ContractLogicError
 
 from common.constant import ENV_CAPTCHA_RUN_KEY
 from common.task import QLTask, ENV_YES_CAPTCHA_KEY, LOCAL
-from common.util import raise_error, get_session, base_logger, get_logger, get_random_str
+from common.util import base_logger, get_logger, get_random_str
 
 TASK_NAME = 'Bera_注册域名'
 FILE_NAME = 'BeraWallet'

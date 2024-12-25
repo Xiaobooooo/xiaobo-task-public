@@ -7,7 +7,6 @@ import random
 import time
 
 import web3
-from eth_abi import decode
 from eth_account.messages import encode_typed_data
 from web3 import Web3, HTTPProvider
 from web3.exceptions import ContractLogicError

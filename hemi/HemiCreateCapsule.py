@@ -1,6 +1,6 @@
 """
 name: Hemi_CreateCapsule
-cron: 0 12 * * * 3,6
+cron: 0 12 * * 3,6
 """
 import web3
 from web3 import Web3

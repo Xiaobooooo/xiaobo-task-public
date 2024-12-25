@@ -49,6 +49,7 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|----------|--------------|
 | [Hemi_交互](https://points.absinthe.network/hemi/start)(邀请码:ecd5454c)                                                                                                                                   | HemiWallet.txt | 地址----私钥 | Hemi部分链上交互任务 | 
 | [Bera_领水](https://bartio.faucet.berachain.com/)(登录需要[YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)或[CAPTCHA_RUN_KEY](https://captcha.run/sso?inviter=4a6c9794-4159-4588-8686-f80958b6018c)处理人机验证) | BeraWallet.txt | 地址       | 熊链领水         | 
+| [Bera_注册域名](https://www.beranames.com/?referral=0xb0AD0756C00A7ccBB1edb86eB69971591353b888)                                                                                                           | BeraWallet.txt | 地址----私钥 | 熊链注册域名       | 
 
 ### 无效项目
 

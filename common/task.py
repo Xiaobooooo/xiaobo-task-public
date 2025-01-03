@@ -1,5 +1,7 @@
 import re
+import json
 import time
+import asyncio
 
 from concurrent import futures
 from abc import ABCMeta, abstractmethod
@@ -33,19 +35,24 @@ def get_thread_number(task_num: int) -> int:
     return thread_num
 
 
-def get_proxy_api(task_name: str) -> str:
+def get_proxy_api(task_name: str, use_ipv6: bool = False) -> str:
     """
     获取代理API
     :param task_name: 任务名
+    :param use_ipv6: 是否取IPv6
     :return: API链接
     """
+    api_url = ''
     disable = os.getenv(ENV_DISABLE_PROXY)
     if task_name and disable:
         items = disable.split("&")
         if task_name in items:
             base_logger.info("当前任务已设置禁用代理")
-            return ''
-    api_url = os.getenv(ENV_PROXY_API)
+            return api_url
+    if use_ipv6:
+        api_url = os.getenv(ENV_PROXY_API_IPV6)
+    if not api_url:
+        api_url = os.getenv(ENV_PROXY_API)
     if not api_url:
         base_logger.info("暂未设置代理API，不使用代理")
     return api_url
@@ -124,11 +131,12 @@ def get_proxy(api_url: str, logger, _proxies: list) -> str:
 
 
 class BaseTask(metaclass=ABCMeta):
-    def __init__(self, task_name: str, file_name: str, is_delay: bool = True, shuffle: bool = True):
+    def __init__(self, task_name: str, file_name: str, use_ipv6: bool = False, disable_task_proxy: bool = False, is_delay: bool = True):
         self.task_name = task_name
         self.file_name = file_name
+        self.use_ipv6 = use_ipv6
+        self.disable_task_proxy = disable_task_proxy
         self.is_delay = is_delay
-        self.shuffle = shuffle
 
         self.task_count = 0
         self.success_count = 0
@@ -152,9 +160,9 @@ class BaseTask(metaclass=ABCMeta):
 
     def load_config(self):
         self.thread_num = get_thread_number(self.task_count)
-        self.proxy_api = get_proxy_api(self.task_name)
+        if not self.disable_task_proxy:
+            self.proxy_api = get_proxy_api(self.task_name, self.use_ipv6)
         self.max_try = get_max_try()
-        self.shuffle = is_exist(ENV_DISABLE_SHUFFLE, self.task_name)
         if self.is_delay:
             self.is_delay = is_exist(ENV_DISABLE_DELAY, self.task_name)
 
@@ -200,13 +208,15 @@ class BaseTask(metaclass=ABCMeta):
 
 
 class QLTask(BaseTask):
-    def __init__(self, task_name: str, file_name: str, is_delay: bool = True, shuffle: bool = True, disable_task_proxy: bool = False):
+    def __init__(self, task_name: str, file_name: str, use_ipv6: bool = False, disable_task_proxy: bool = False, is_delay: bool = True,
+                 shuffle: bool = True):
         self.lines = []
-        super().__init__(task_name, file_name, is_delay, shuffle)
+        self.shuffle = shuffle
+        if is_exist(ENV_DISABLE_SHUFFLE, self.task_name):
+            self.shuffle = False
+        super().__init__(task_name, file_name, use_ipv6, disable_task_proxy, is_delay)
         if self.shuffle:
             random.shuffle(self.lines)
-        if disable_task_proxy is True:
-            self.proxy_api = None
 
     def load_config(self):
         self.lines = load_txt(self.file_name)

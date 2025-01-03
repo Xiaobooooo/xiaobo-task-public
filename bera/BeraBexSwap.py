@@ -55,8 +55,8 @@ class Task(QLTask):
         gas_price = int(BERA.eth.gas_price * 1.2)
         balance = BERA.eth.get_balance(account.address)
         logger.info(f'BERA Balance: {Web3.from_wei(balance, "ether")}')
-        if balance < Web3.to_wei(0.001, 'ether'):
-            logger.warning('BERA余额低于0.001，不进行Swap')
+        if balance < Web3.to_wei(0.005, 'ether'):
+            logger.warning('BERA余额低于0.005，不进行Swap')
             return
         token_balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
         logger.info(f'HONEY Balance: {Web3.from_wei(token_balance, "ether")}')
@@ -93,10 +93,12 @@ class Task(QLTask):
                     random_value = 0.01
                 elif balance <= Web3.to_wei(0.1, 'ether'):
                     random_value = random.uniform(0.01, 0.05)
+                elif balance <= Web3.to_wei(0.5, 'ether'):
+                    random_value = random.uniform(0.05, 0.2)
                 elif balance <= Web3.to_wei(1, 'ether'):
                     random_value = random.uniform(0.1, 0.5)
                 else:
-                    random_value = random.uniform(0.1, 0.9)
+                    random_value = random.uniform(0.1, 0.88)
                 random_value_ether = Web3.to_wei(random_value, 'ether')
                 params = {
                     'poolIdx': 36000,
@@ -113,8 +115,14 @@ class Task(QLTask):
             return
         tx['gas'] = int(BERA.eth.estimate_gas(tx) * 1.2)
         signed_tx = BERA.eth.account.sign_transaction(tx, private_key)
-        transaction = BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
-        logger.success(f"Swap交易发送成功: 0x{transaction.hex()}")
+
+        try:
+            transaction = BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
+            logger.success(f"Swap交易发送成功: 0x{transaction.hex()}")
+        except Exception as e:
+            if repr(e).count("insufficient funds"):
+                logger.error("资金不足，可能Gas过高")
+            raise e
         while True:
             try:
                 receipt = BERA.eth.get_transaction_receipt(transaction)
@@ -130,4 +138,8 @@ class Task(QLTask):
 
 
 if __name__ == '__main__':
-    Task(TASK_NAME, FILE_NAME, disable_task_proxy=True, is_delay=False).run()
+    gas_price = Web3.from_wei(BERA.eth.gas_price, 'gwei')
+    if gas_price < 250:
+        Task(TASK_NAME, FILE_NAME, disable_task_proxy=True, is_delay=False).run()
+    else:
+        get_logger().error('Gas过高不进行Swap')

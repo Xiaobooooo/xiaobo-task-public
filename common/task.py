@@ -210,9 +210,9 @@ class QLTask(BaseTask):
                  shuffle: bool = True):
         self.lines = []
         self.shuffle = shuffle
+        super().__init__(task_name, file_name, use_ipv6, disable_task_proxy, is_delay)
         if is_exist(ENV_DISABLE_SHUFFLE, self.task_name):
             self.shuffle = False
-        super().__init__(task_name, file_name, use_ipv6, disable_task_proxy, is_delay)
         if self.shuffle:
             random.shuffle(self.lines)
 

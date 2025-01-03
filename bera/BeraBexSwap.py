@@ -1,5 +1,5 @@
 """
-name: BERA_Swap
+name: BERA_BexSwap
 cron: 0 10,20 * * *
 """
 import os
@@ -12,7 +12,7 @@ from web3.exceptions import ContractLogicError, TransactionNotFound
 from common.task import QLTask
 from common.util import get_logger
 
-TASK_NAME = 'BERA_Swap'
+TASK_NAME = 'BERA_BexSwap'
 FILE_NAME = 'BeraWallet'
 
 RPC_NAME = 'BERA_RPC'

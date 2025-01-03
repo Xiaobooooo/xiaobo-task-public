@@ -130,4 +130,4 @@ class Task(QLTask):
 
 
 if __name__ == '__main__':
-    Task(TASK_NAME, FILE_NAME).run()
+    Task(TASK_NAME, FILE_NAME, disable_task_proxy=True, is_delay=False).run()

@@ -49,13 +49,21 @@ class Task(QLTask):
         account = web3.Account.from_key(private_key)
         gas_price = int(HEMI.eth.gas_price * 1.5)
         nonce = HEMI.eth.get_transaction_count(account.address)
-        balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
+
+        balance = HEMI.eth.get_balance(account.address)
+        logger.info(f'ETH Balance: {Web3.from_wei(balance, "ether")}')
+        if balance < Web3.to_wei(0.005, 'ether'):
+            logger.warning('ETH余额低于0.005，不进行Swap')
+            return
+        token_balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
+        logger.info(f'HDAI Balance: {Web3.from_wei(token_balance, "ether")}')
         try:
-            if balance > Web3.to_wei(30_000, "ether"):
+            if token_balance > Web3.to_wei(50000, "ether"):
                 logger.info("HDAI TO ETH")
-                hex_value = Web3.to_hex(balance).replace('0x', '')
-                timestamp = int(time.time() + 60000)
-                sig_deadline = int(time.time() + 600)
+                hex_value = Web3.to_hex(token_balance).replace('0x', '')
+                timestamp = int(time.time() + 60 * 60 * 24 * 365)
+                sig_deadline = int(time.time() + 60 * 60 * 24 * 180)
+                sign_nonce = random.randint(6666, 888888888)
                 message = encode_typed_data(full_message={"types": {
                     "PermitSingle": [{"name": "details", "type": "PermitDetails"}, {"name": "spender", "type": "address"},
                                      {"name": "sigDeadline", "type": "uint256"}],
@@ -68,9 +76,10 @@ class Task(QLTask):
                     "primaryType": "PermitSingle", "message": {
                         "details": {"token": "0xec46e0efb2ea8152da0327a5eb3ff9a43956f13e",
                                     "amount": "1461501637330902918203684832716283019655932542975", "expiration": timestamp,
-                                    "nonce": "0"}, "spender": "0xa18019e62f266c2e17e33398448e4105324e0d0f", "sigDeadline": sig_deadline}})
+                                    "nonce": sign_nonce}, "spender": "0xa18019e62f266c2e17e33398448e4105324e0d0f",
+                        "sigDeadline": sig_deadline}})
                 signature = HEMI.eth.account.sign_message(message, private_key)
-                bytes_1 = f"0x{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '').zfill(64)}000000000000000000000000ffffffffffffffffffffffffffffffffffffffff{Web3.to_hex(timestamp).replace('0x', '').zfill(64)}0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a18019e62f266c2e17e33398448e4105324e0d0f{Web3.to_hex(sig_deadline).replace('0x', '').zfill(64)}00000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000041{signature.signature.hex().zfill(64)}00000000000000000000000000000000000000000000000000000000000000"
+                bytes_1 = f"0x{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '').zfill(64)}000000000000000000000000ffffffffffffffffffffffffffffffffffffffff{Web3.to_hex(timestamp).replace('0x', '').zfill(64)}{Web3.to_hex(sign_nonce).replace('0x', '').zfill(64)}000000000000000000000000a18019e62f266c2e17e33398448e4105324e0d0f{Web3.to_hex(sig_deadline).replace('0x', '').zfill(64)}00000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000041{signature.signature.hex()}00000000000000000000000000000000000000000000000000000000000000"
                 bytes_2 = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002b{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}002710{WETH_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
                 bytes_3 = f"0x0000000000000000000000000000000000000000000000000000000000000001{'0'.zfill(64)}"
                 execute = CONTRACT.functions.execute("0x0a000c", (bytes_1, bytes_2, bytes_3), int(time.time() + 600))
@@ -86,7 +95,7 @@ class Task(QLTask):
                         tx = approve.build_transaction(
                             {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
                         )
-                    elif repr(e).count("0x756688fe"):
+                    elif repr(e).count("0x756688fe") or repr(e).count("0x815e1d64"):
                         bytes_1 = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002b{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}000bb8{WETH_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
                         bytes_2 = f"0x0000000000000000000000000000000000000000000000000000000000000001{'0'.zfill(64)}"
                         execute = CONTRACT.functions.execute("0x000c", (bytes_1, bytes_2), int(time.time() + 600))
@@ -97,7 +106,16 @@ class Task(QLTask):
                         raise e
             else:
                 logger.info("ETH TO HDAI")
-                random_value = random.uniform(0.00001, 0.001)
+                if balance <= Web3.to_wei(0.005, 'ether'):
+                    random_value = random.uniform(0.0001, 0.001)
+                elif balance <= Web3.to_wei(0.01, 'ether'):
+                    random_value = random.uniform(0.001, 0.005)
+                elif balance <= Web3.to_wei(0.05, 'ether'):
+                    random_value = random.uniform(0.005, 0.02)
+                elif balance <= Web3.to_wei(0.1, 'ether'):
+                    random_value = random.uniform(0.01, 0.03)
+                else:
+                    random_value = random.uniform(0.01, 0.05)
                 hex_value = Web3.to_hex(Web3.to_wei(random_value, "ether")).replace('0x', '')
                 bytes_1 = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}"
                 bytes_2 = f"0x0000000000000000000000000000000000000000000000000000000000000001{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002b{WETH_ADDRESS.lower().replace('0x', '')}000bb8{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"

@@ -139,7 +139,9 @@ class Task(QLTask):
 
 if __name__ == '__main__':
     gas_price = Web3.from_wei(BERA.eth.gas_price, 'gwei')
+    base_logger = get_logger()
+    base_logger.info("GasPrice: {}".format(gas_price))
     if gas_price < 250:
         Task(TASK_NAME, FILE_NAME, disable_task_proxy=True, is_delay=False).run()
     else:
-        get_logger().error('Gas过高不进行Swap')
+        base_logger.error('Gas过高不进行Swap')

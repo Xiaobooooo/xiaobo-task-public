@@ -23,24 +23,75 @@ if not rpc:
 
 BERA = Web3(HTTPProvider(rpc))
 
-CONTRACT_ADDRESS = Web3.to_checksum_address('0x21e2C0AFd058A89FCf7caf3aEA3cB84Ae977B73D')
-ABI = [{"inputs": [{"components": [{"internalType": "uint256", "name": "poolIdx", "type": "uint256"},
-                                   {"internalType": "address", "name": "base", "type": "address"},
-                                   {"internalType": "address", "name": "quote", "type": "address"},
-                                   {"internalType": "bool", "name": "isBuy", "type": "bool"}],
-                    "internalType": "struct SwapHelpers.SwapStep[]", "name": "_steps", "type": "tuple[]"},
-                   {"internalType": "uint128", "name": "_amount", "type": "uint128"},
-                   {"internalType": "uint128", "name": "_minOut", "type": "uint128"}], "name": "multiSwap",
-        "outputs": [{"internalType": "uint128", "name": "out", "type": "uint128"}], "stateMutability": "payable", "type": "function"}]
-CONTRACT = BERA.eth.contract(address=CONTRACT_ADDRESS, abi=ABI)
+BEX_SWAP_ADDRESS = Web3.to_checksum_address('0x21e2C0AFd058A89FCf7caf3aEA3cB84Ae977B73D')
+BEX_SWAP_ABI = [{"inputs": [{"components": [{"internalType": "uint256", "name": "poolIdx", "type": "uint256"},
+                                            {"internalType": "address", "name": "base", "type": "address"},
+                                            {"internalType": "address", "name": "quote", "type": "address"},
+                                            {"internalType": "bool", "name": "isBuy", "type": "bool"}],
+                             "internalType": "struct SwapHelpers.SwapStep[]", "name": "_steps", "type": "tuple[]"},
+                            {"internalType": "uint128", "name": "_amount", "type": "uint128"},
+                            {"internalType": "uint128", "name": "_minOut", "type": "uint128"}], "name": "multiSwap",
+                 "outputs": [{"internalType": "uint128", "name": "out", "type": "uint128"}], "stateMutability": "payable",
+                 "type": "function"}]
+BEX_SWAP_CONTRACT = BERA.eth.contract(address=BEX_SWAP_ADDRESS, abi=BEX_SWAP_ABI)
 
-TOKEN_CONTRACT_ADDRESS = Web3.to_checksum_address("0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03")
 TOKEN_ABI = [{"constant": True, "inputs": [{"name": "_owner", "type": "address"}], "name": "balanceOf",
               "outputs": [{"name": "", "type": "uint256"}], "payable": False, "stateMutability": "view", "type": "function"},
              {"inputs": [{"internalType": "address", "name": "spender", "type": "address"},
                          {"internalType": "uint256", "name": "value", "type": "uint256"}], "name": "approve",
               "outputs": [{"internalType": "bool", "name": "", "type": "bool"}], "stateMutability": "nonpayable", "type": "function"}]
-TOKEN_CONTRACT = BERA.eth.contract(address=Web3.to_checksum_address(TOKEN_CONTRACT_ADDRESS), abi=TOKEN_ABI)
+
+HONEY_ADDRESS = Web3.to_checksum_address("0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03")
+HONEY_CONTRACT = BERA.eth.contract(address=Web3.to_checksum_address(HONEY_ADDRESS), abi=TOKEN_ABI)
+
+
+def confirm_transaction(transaction):
+    while True:
+        try:
+            receipt = BERA.eth.get_transaction_receipt(transaction)
+            return receipt.get('status') == 1
+        except TransactionNotFound:
+            continue
+        except Exception as e:
+            raise e
+    return False
+
+
+def approve(account, contract, spender):
+    method = contract.functions.approve(Web3.to_checksum_address(spender),
+                                        57896044618658097711785492504343953926634992332820282019728792003956564819967)
+    gas_price = int(BERA.eth.gas_price * 1.2)
+    nonce = BERA.eth.get_transaction_count(account.address)
+    tx = method.build_transaction(
+        {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
+    )
+    signed_tx = BERA.eth.account.sign_transaction(tx, account.key)
+    return BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
+
+
+def swap_honey(account, is_buy, value):
+    params = {
+        'poolIdx': 36000,
+        'base': '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03',
+        'quote': '0x0000000000000000000000000000000000000000',
+        'isBuy': is_buy,
+    }
+    method = BEX_SWAP_CONTRACT.functions.multiSwap([params], value, 0)
+    gas_price = int(BERA.eth.gas_price * 1.2)
+    nonce = BERA.eth.get_transaction_count(account.address)
+    print( {
+        'poolIdx': 36000,
+        'base': '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03',
+        'quote': '0x0000000000000000000000000000000000000000',
+        'isBuy': is_buy,
+    })
+    print(0 if is_buy else value)
+    tx = method.build_transaction(
+        {'from': account.address, 'value': 0 if is_buy else value, 'gasPrice': gas_price, 'nonce': nonce}
+    )
+    tx['gas'] = int(BERA.eth.estimate_gas(tx) * 1.1)
+    signed_tx = BERA.eth.account.sign_transaction(tx, account.key)
+    return BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
 
 
 class Task(QLTask):
@@ -51,42 +102,36 @@ class Task(QLTask):
         private_key = datas[1]
 
         account = web3.Account.from_key(private_key)
-        nonce = BERA.eth.get_transaction_count(account.address)
-        gas_price = int(BERA.eth.gas_price * 1.2)
         balance = BERA.eth.get_balance(account.address)
         logger.info(f'BERA Balance: {Web3.from_wei(balance, "ether")}')
         if balance < Web3.to_wei(0.005, 'ether'):
             logger.warning('BERA余额低于0.005，不进行Swap')
             return
-        token_balance = TOKEN_CONTRACT.functions.balanceOf(account.address).call()
+        token_balance = HONEY_CONTRACT.functions.balanceOf(account.address).call()
         logger.info(f'HONEY Balance: {Web3.from_wei(token_balance, "ether")}')
         try:
             if token_balance > Web3.to_wei(2, "ether"):
                 logger.info("HONEY TO BERA")
-                params = {
-                    'poolIdx': 36000,
-                    'base': '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03',
-                    'quote': '0x0000000000000000000000000000000000000000',
-                    'isBuy': True,
-                }
-                method = CONTRACT.functions.multiSwap([params], token_balance, 0)
                 try:
-                    tx = method.build_transaction(
-                        {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
-                    )
+                    transaction = swap_honey(account, True, token_balance)
+                    logger.info(f'Swap交易发送成功: 0x{transaction.hex()}')
                 except ContractLogicError as e:
                     if repr(e).count("0x13be252b"):
                         logger.info("授权HONEY")
-                        approve = TOKEN_CONTRACT.functions.approve(Web3.to_checksum_address('0x21e2C0AFd058A89FCf7caf3aEA3cB84Ae977B73D'),
-                                                                   57896044618658097711785492504343953926634992332820282019728792003956564819967)
-                        tx = approve.build_transaction(
-                            {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
-                        )
+                        transaction = approve(account, HONEY_CONTRACT, '0x21e2C0AFd058A89FCf7caf3aEA3cB84Ae977B73D')
+                        logger.info(f'授权HONEY交易发送成功: 0x{transaction.hex()}')
+                        result = confirm_transaction(transaction)
+                        if not result:
+                            logger.error(f'授权HONEY交易确认失败: 0x{transaction.hex()}')
+                            return
+                        logger.success(f'授权HONEY交易确认成功: 0x{transaction.hex()}')
+                        transaction = swap_honey(account, True, token_balance)
+                        logger.info(f'HONEY TO BERA交易发送成功: 0x{transaction.hex()}')
                     else:
                         raise e
             else:
                 if balance < Web3.to_wei(0.01, 'ether'):
-                    logger.warning('BERA余额低于0.001，不进行ETH TO HONEY')
+                    logger.warning('BERA余额低于0.001，不进行BERA TO HONEY')
                     return
                 logger.info("BERA TO HONEY")
                 if balance <= Web3.to_wei(0.05, 'ether'):
@@ -94,54 +139,32 @@ class Task(QLTask):
                 elif balance <= Web3.to_wei(0.1, 'ether'):
                     random_value = random.uniform(0.01, 0.05)
                 elif balance <= Web3.to_wei(0.5, 'ether'):
-                    random_value = random.uniform(0.05, 0.2)
-                elif balance <= Web3.to_wei(1, 'ether'):
-                    random_value = random.uniform(0.1, 0.5)
+                    random_value = random.uniform(0.05, 0.25)
                 else:
-                    random_value = random.uniform(0.1, 0.88)
+                    random_value = random.uniform(0.1, 0.3)
                 random_value_ether = Web3.to_wei(random_value, 'ether')
-                params = {
-                    'poolIdx': 36000,
-                    'base': '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03',
-                    'quote': '0x0000000000000000000000000000000000000000',
-                    'isBuy': False,
-                }
-                method = CONTRACT.functions.multiSwap([params], random_value_ether, 0)
-                tx = method.build_transaction(
-                    {'from': account.address, 'value': random_value_ether, 'nonce': nonce, 'gasPrice': gas_price}
-                )
+                transaction = swap_honey(account, False, random_value_ether)
+                logger.info(f'BERA TO HONEY交易发送成功: 0x{transaction.hex()}')
         except ContractLogicError as e:
-            logger.error(f'Swap交易检测失败: {e}')
+            logger.error(f'合约调用失败: {e}')
             return
-        tx['gas'] = int(BERA.eth.estimate_gas(tx) * 1.2)
-        signed_tx = BERA.eth.account.sign_transaction(tx, private_key)
-
-        try:
-            transaction = BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
-            logger.success(f"Swap交易发送成功: 0x{transaction.hex()}")
         except Exception as e:
             if repr(e).count("insufficient funds"):
                 logger.error("资金不足，可能Gas过高")
+                return
             raise e
-        while True:
-            try:
-                receipt = BERA.eth.get_transaction_receipt(transaction)
-                if receipt.get('status') == 0:
-                    logger.error(f'Swap交易确认失败: 0x{transaction.hex()}')
-                if receipt.get('status') == 1:
-                    logger.success(f'Swap交易确认成功: 0x{transaction.hex()}')
-                break
-            except TransactionNotFound:
-                continue
-            except Exception as e:
-                raise e
+        result = confirm_transaction(transaction)
+        if result:
+            logger.success(f'Swap交易确认成功: 0x{transaction.hex()}')
+        else:
+            logger.error(f'Swap交易确认失败: 0x{transaction.hex()}')
 
 
 if __name__ == '__main__':
-    gas_price = Web3.from_wei(BERA.eth.gas_price, 'gwei')
+    gas_price_now = Web3.from_wei(BERA.eth.gas_price, 'gwei')
     base_logger = get_logger()
-    base_logger.info("GasPrice: {}".format(gas_price))
-    if gas_price < 250:
+    base_logger.info("GasPrice: {}".format(gas_price_now))
+    if gas_price_now < 250:
         Task(TASK_NAME, FILE_NAME, disable_task_proxy=True, is_delay=False).run()
     else:
-        base_logger.error('Gas过高不进行Swap')
+        base_logger.error('GasPrice过高不进行Swap')

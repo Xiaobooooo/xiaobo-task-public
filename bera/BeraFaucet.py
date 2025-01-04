@@ -18,7 +18,7 @@ FILE_NAME = 'BeraWallet'
 def claim() -> str:
     name = '领水'
     url = f'https://bartiofaucet.berachain.com/api/claim?address={LOCAL.address}'
-    res = LOCAL.session.post(url, json={"address": LOCAL.address}, headers={'Authorization': 'Bearer ' + LOCAL.captcha})
+    res = LOCAL.session.post(url, data='{"address":"' + LOCAL.address + '"}', headers={'Authorization': 'Bearer ' + LOCAL.captcha})
     if res.text.count('Added'):
         return f'{name}: 成功'
     if res.text.count('You have exceeded the rate limit'):
@@ -34,6 +34,13 @@ class Task(QLTask):
     def task(self, index: int, datas: list[str], proxy: str, logger):
         LOCAL.address = datas[0]
         LOCAL.session = get_session(proxy)
+        LOCAL.session.headers.update({
+            'Host': 'bartiofaucet.berachain.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+            'Content-Type': 'text/plain;charset=UTF-8',
+            'Origin': 'https://bartio.faucet.berachain.com',
+            'Referer': 'https://bartio.faucet.berachain.com/'
+        })
         LOCAL.captcha = ''
         result = claim()
         if not result.count('无效的验证'):

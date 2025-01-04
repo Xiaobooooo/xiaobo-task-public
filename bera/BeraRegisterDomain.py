@@ -12,7 +12,7 @@ from web3.exceptions import ContractLogicError
 
 from common.constant import ENV_CAPTCHA_RUN_KEY
 from common.task import QLTask, ENV_YES_CAPTCHA_KEY, LOCAL
-from common.util import base_logger, get_logger, get_random_str
+from common.util import base_logger, get_logger, get_random_str, get_session, raise_error
 
 TASK_NAME = 'Bera_注册域名'
 FILE_NAME = 'BeraWallet'
@@ -50,16 +50,38 @@ def name_hash(domain):
     return current_hash
 
 
+def query_domain(address):
+    name = '查询域名'
+    url = 'https://api.goldsky.com/api/public/project_clz85ah0rn3jq01uodu4sdogx/subgraphs/beranames-bartio-prod-berachain-bartio/1/gn'
+    payload = {"operationName": "getMints",
+               "variables": {"first": 10, "offset": 0, "owner": address.lower(), "filterValue": ""},
+               "query": "query getMints($first: Int!, $offset: Int!, $owner: String!, $filterValue: String!) {\n  nameRegistereds(\n    first: $first\n    skip: $offset\n    orderBy: timestamp_\n    orderDirection: desc\n    where: {owner: $owner, name_contains: $filterValue}\n  ) {\n    name\n    label\n    id\n    expires\n    owner\n    timestamp_\n    __typename\n  }\n  transfers(where: {owner: $owner}) {\n    owner\n    __typename\n  }\n}"}
+    res = LOCAL.session.post(url, json=payload)
+    if res.text.count('nameRegistereds'):
+        return res.json().get('data').get('nameRegistereds')
+    raise_error(name, res)
+
+
 class Task(QLTask):
     def task(self, index: int, datas: list[str], proxy: str, logger):
         LOCAL.address = datas[0]
-        if len(datas) <2:
+        if len(datas) < 2:
             return
         private_key = datas[1]
         account = web3.Account.from_key(private_key)
 
         balance = BERA.eth.get_balance(account.address)
-        if balance != Web3.to_wei(3, 'ether') and balance != Web3.to_wei(2, 'ether'):
+        if balance <= Web3.to_wei(1, 'ether'):
+            logger.error("余额不足，无注册域名")
+            return
+
+        LOCAL.session = get_session(proxy)
+        LOCAL.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+        })
+        domains = query_domain(account.address)
+        if len(domains) > 0:
+            logger.info("已注册域名，跳过")
             return
 
         domain = get_random_str()
@@ -82,23 +104,4 @@ class Task(QLTask):
 
 
 if __name__ == '__main__':
-    CAPTCHA_RUN_KEY, YES_CAPTCHA_KEY = os.getenv(ENV_CAPTCHA_RUN_KEY), os.getenv(ENV_YES_CAPTCHA_KEY)
-    if CAPTCHA_RUN_KEY or YES_CAPTCHA_KEY:
-        try:
-            if YES_CAPTCHA_KEY:
-                cap_res = requests.post('https://api.yescaptcha.com/getBalance', json={'clientKey': YES_CAPTCHA_KEY})
-            else:
-                cap_res = requests.get('https://api.captcha.run/v2/users/self/wallet',
-                                       headers={'Authorization': f'Bearer {CAPTCHA_RUN_KEY}'})
-            if cap_res.text.count('balance'):
-                base_logger.success(
-                    f"当前{'YesCaptchaKey' if YES_CAPTCHA_KEY else 'CaptchaRunKey'}: {YES_CAPTCHA_KEY if YES_CAPTCHA_KEY else CAPTCHA_RUN_KEY}   余额: {cap_res.json().get('balance')}")
-                Task(TASK_NAME, FILE_NAME, is_delay=False).run()
-            else:
-                base_logger.error(
-                    f"{'YesCaptchaKey' if YES_CAPTCHA_KEY else 'CaptchaRunKey'}余额查询失败: {cap_res.json().get('errorDescription') if cap_res.text.count('errorDescription') else cap_res.text}"
-                )
-        except:
-            base_logger.error(f"{'YesCaptchaKey' if YES_CAPTCHA_KEY else 'CaptchaRunKey'}余额查询失败")
-    else:
-        base_logger.error(f"请设置CaptchaRunKey变量[{ENV_CAPTCHA_RUN_KEY}]或YesCaptchaKey变量[{ENV_YES_CAPTCHA_KEY}]，程序退出。")
+    Task(TASK_NAME, FILE_NAME, use_ipv6=True, is_delay=False).run()

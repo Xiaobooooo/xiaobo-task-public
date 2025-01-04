@@ -67,11 +67,11 @@ def get_max_try() -> int:
 def is_exist(env_name: str, task_name: str) -> int:
     disable_items = os.getenv(env_name)
     if not disable_items:
-        return True
+        return False
     items = disable_items.split("&")
     if task_name in items:
-        return False
-    return True
+        return True
+    return False
 
 
 def get_delay_min() -> int:
@@ -161,8 +161,8 @@ class BaseTask(metaclass=ABCMeta):
         if not self.disable_task_proxy:
             self.proxy_api = get_proxy_api(self.task_name, self.use_ipv6)
         self.max_try = get_max_try()
-        if self.is_delay:
-            self.is_delay = is_exist(ENV_DISABLE_DELAY, self.task_name)
+        if is_exist(ENV_DISABLE_DELAY, self.task_name):
+            self.is_delay = False
 
     def run(self):
         if self.task_count < 1:

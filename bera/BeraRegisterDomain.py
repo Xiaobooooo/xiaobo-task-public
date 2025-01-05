@@ -64,9 +64,10 @@ def query_domain(address):
 
 class Task(QLTask):
     def task(self, index: int, datas: list[str], proxy: str, logger):
-        LOCAL.address = datas[0]
         if len(datas) < 2:
+            logger.warning('不存在私钥，不进行Swap')
             return
+        LOCAL.address = datas[0]
         private_key = datas[1]
         account = web3.Account.from_key(private_key)
 

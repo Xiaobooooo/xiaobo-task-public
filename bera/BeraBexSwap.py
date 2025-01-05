@@ -96,7 +96,7 @@ def swap_honey(account, is_buy, value):
 
 class Task(QLTask):
     def task(self, index: int, datas: list[str], proxy: str, logger):
-        if len(datas) == 0:
+        if len(datas) < 2:
             logger.warning('不存在私钥，不进行Swap')
             return
         private_key = datas[1]

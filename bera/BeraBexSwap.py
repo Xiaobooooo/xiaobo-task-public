@@ -79,13 +79,6 @@ def swap_honey(account, is_buy, value):
     method = BEX_SWAP_CONTRACT.functions.multiSwap([params], value, 0)
     gas_price = int(BERA.eth.gas_price * 1.2)
     nonce = BERA.eth.get_transaction_count(account.address)
-    print( {
-        'poolIdx': 36000,
-        'base': '0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03',
-        'quote': '0x0000000000000000000000000000000000000000',
-        'isBuy': is_buy,
-    })
-    print(0 if is_buy else value)
     tx = method.build_transaction(
         {'from': account.address, 'value': 0 if is_buy else value, 'gasPrice': gas_price, 'nonce': nonce}
     )

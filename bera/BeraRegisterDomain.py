@@ -3,6 +3,7 @@ cron: 1 1 1 1 1
 new Env('Bera_注册域名')
 """
 import os
+import random
 
 import requests
 import web3
@@ -22,6 +23,8 @@ rpc = os.getenv(RPC_NAME)
 if not rpc:
     get_logger().info(f"暂未设置熊链RPC环境变量[{RPC_NAME}]")
     rpc = "https://bartio.rpc.berachain.com/"
+
+REFERRERS = ['0xb0AD0756C00A7ccBB1edb86eB69971591353b888', '0x74E6CbA22fc12045df72A322752746ACbD42511E']
 
 BERA = Web3(HTTPProvider(rpc))
 
@@ -89,7 +92,7 @@ class Task(QLTask):
         gas_price = int(BERA.eth.gas_price * 1.1)
         nonce = BERA.eth.get_transaction_count(account.address)
         resolver = '0x34Bb7CC576FA4B5f31f984a65dDB7Ff78b8Ecbe0'
-        referrer = '0xb0AD0756C00A7ccBB1edb86eB69971591353b888'
+        referrer = random.choice(REFERRERS)
         data = CONTRACT.encode_abi('setAddr', [name_hash(f'{domain}.bera'), account.address])
         try:
             register = CONTRACT.functions.register((domain, account.address, 31536000, resolver, [data], True, referrer))

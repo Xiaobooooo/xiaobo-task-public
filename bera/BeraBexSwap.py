@@ -244,6 +244,6 @@ if __name__ == '__main__':
     base_logger = get_logger()
     base_logger.info("GasPrice: {}".format(gas_price_now))
     if gas_price_now < 250:
-        Task(TASK_NAME, FILE_NAME).run()
+        Task(TASK_NAME, FILE_NAME, use_ipv6=True).run()
     else:
         base_logger.error('GasPrice过高不进行Swap')

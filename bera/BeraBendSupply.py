@@ -1,6 +1,6 @@
 """
 name: BERA_BendSupply
-cron: 0 12,22 * * *
+cron: 0 15 * * *
 """
 import web3
 from web3 import Web3

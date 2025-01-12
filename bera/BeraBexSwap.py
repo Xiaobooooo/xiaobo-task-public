@@ -203,7 +203,7 @@ class Task(QLTask):
                     logger.info(f'HONEY Balance: {Web3.from_wei(token_balance, "ether")}')
                     lp_balance = HONEY_WBERA_LP_CONTRACT.functions.balanceOf(account.address).call()
                     logger.info(f'LP Balance: {Web3.from_wei(lp_balance, "ether")}')
-                    if lp_balance > 0 and random.randint(1, 5) != 3:
+                    if lp_balance > 0 and random.randint(1, 3) != 2:
                         return
                     allowance_amount = HONEY_CONTRACT.functions.allowance(account.address, BEX_POOL_ADDRESS).call()
                     if token_balance > allowance_amount and not approve(logger, account, HONEY_CONTRACT, BEX_POOL_ADDRESS):

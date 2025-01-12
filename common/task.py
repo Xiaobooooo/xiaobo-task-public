@@ -1,5 +1,7 @@
 import re
+import json
 import time
+import asyncio
 
 from concurrent import futures
 from abc import ABCMeta, abstractmethod
@@ -33,11 +35,39 @@ def get_thread_number(task_num: int) -> int:
     return thread_num
 
 
-def get_proxy_api(task_name: str, use_ipv6: bool = False) -> str:
+def get_proxy(task_name: str, use_ipv6: bool = False, is_tg: bool = False) -> [str, str]:
     """
-    获取代理API
+    获取代理
     :param task_name: 任务名
     :param use_ipv6: 是否取IPv6
+    :param is_tg: 是否为TG代理
+    :return: [host:port,username:password]
+    """
+    host_port = ''
+    username_password = ''
+    disable = os.getenv(ENV_DISABLE_PROXY)
+    if task_name and disable:
+        items = disable.split("&")
+        if task_name in items:
+            base_logger.info("当前任务已设置禁用代理")
+            return host_port, username_password
+    if use_ipv6:
+        host_port = os.getenv(f'TG_{ENV_PROXY_IPV6_HOST_PORT}' if is_tg else ENV_PROXY_IPV6_HOST_PORT)
+        username_password = os.getenv(f'TG_{ENV_PROXY_IPV6_USERNAME_PASSWORD}' if is_tg else ENV_PROXY_IPV6_USERNAME_PASSWORD)
+    if not host_port or not username_password:
+        host_port = os.getenv(f'TG_{ENV_PROXY_HOST_PORT}' if is_tg else ENV_PROXY_HOST_PORT)
+        username_password = os.getenv(f'TG_{ENV_PROXY_USERNAME_PASSWORD}' if is_tg else ENV_PROXY_USERNAME_PASSWORD)
+    if not host_port or not username_password:
+        base_logger.info("未设置代理")
+    return host_port, username_password
+
+
+def get_proxy_api(task_name: str, use_ipv6: bool = False, is_tg: bool = False) -> str:
+    """
+    获取代理
+    :param task_name: 任务名
+    :param use_ipv6: 是否取IPv6
+    :param is_tg: 是否为TG代理
     :return: API链接
     """
     api_url = ''
@@ -48,11 +78,11 @@ def get_proxy_api(task_name: str, use_ipv6: bool = False) -> str:
             base_logger.info("当前任务已设置禁用代理")
             return api_url
     if use_ipv6:
-        api_url = os.getenv(ENV_PROXY_API_IPV6)
+        api_url = os.getenv(f'TG_{ENV_PROXY_IPV6_API}' if is_tg else ENV_PROXY_IPV6_API)
     if not api_url:
-        api_url = os.getenv(ENV_PROXY_API)
+        api_url = os.getenv(f'TG_{ENV_PROXY_API}' if is_tg else ENV_PROXY_API)
     if not api_url:
-        base_logger.info("暂未设置代理API，不使用代理")
+        base_logger.info("未设置代理API，不使用代理")
     return api_url
 
 
@@ -90,7 +120,7 @@ def get_delay_max() -> int:
     return DELAY_MAX
 
 
-def get_proxy(api_url: str, logger, _proxies: list) -> str:
+def get_proxy_by_api(api_url: str, logger, _proxies: list) -> str:
     """
     提取代理IP
     :param api_url: API链接
@@ -142,6 +172,8 @@ class BaseTask(metaclass=ABCMeta):
         self.logger = get_logger()
         self.thread_num = THREAD_NUMBER
         self.max_try = MAX_TRY
+        self.proxy_host_port = ''
+        self.proxy_username_password = ''
         self.proxy_api = ''
         self.proxies = []
 
@@ -159,7 +191,9 @@ class BaseTask(metaclass=ABCMeta):
     def load_config(self):
         self.thread_num = get_thread_number(self.task_count)
         if not self.disable_task_proxy:
+            self.proxy_host_port, self.proxy_username_password = get_proxy(self.task_name, self.use_ipv6)
             self.proxy_api = get_proxy_api(self.task_name, self.use_ipv6)
+
         self.max_try = get_max_try()
         if is_exist(ENV_DISABLE_DELAY, self.task_name):
             self.is_delay = False
@@ -231,9 +265,12 @@ class QLTask(BaseTask):
         datas = self.lines[index].strip().split("----")
         for try_num in range(1, self.max_try + 1):
             logger.info(f"第{try_num}次运行任务: {datas[0]}")
-            proxy = get_proxy(self.proxy_api, logger, self.proxies)
+            if self.proxy_host_port and self.proxy_username_password:
+                proxy = f'{self.proxy_username_password.replace("***", datas[0])}@{self.proxy_host_port}'
+            else:
+                proxy = get_proxy_by_api(self.proxy_api, logger, self.proxies)
             if proxy:
-                logger.info(f"使用代理: {proxy.split('//')[1]}")
+                logger.info(f"使用代理: {proxy.split('://')[-1]}")
             try:
                 self.task(index, datas, proxy, logger)
                 LOCAL.__dict__.clear()

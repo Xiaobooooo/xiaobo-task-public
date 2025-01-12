@@ -22,19 +22,23 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 
 ### 通用环境变量
 
-| 环境变量名                                                                                   | 变量介绍                                                                             |
+| 环境变量名                                                                                   | 变量介绍                                                                             | 
 |-----------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
 | THREAD_NUMBER                                                                           | 线程数(默认10线程)                                                                      |
-| MAX_TRY                                                                                 | 任务尝试次数(默认3次)                                                                     |
-| DISABLE_SHUFFLE                                                                         | 禁用乱序执行的项目名称，多个项目使用&连接                                                            |
-| [PROXY_API](https://app.nstproxy.com/register?i=4T11hl)                                 | 代理提取API链接(协议:HTTP 分隔:换行 文本格式:TXT 代理格式: host:port 或 username:password@host:port ) |
-| [PROXY_API_IPV6](https://app.nstproxy.com/register?i=4T11hl)                            | IPV6代理提取API链接(协议/分隔/文本格式/代理格式同PROXY_API)                                         |
+| MAX_TRY                                                                                 | 任务尝试次数(默认3次)                                                                     | 
+| DISABLE_SHUFFLE                                                                         | 禁用乱序执行的项目名称，多个项目使用&连接                                                            | 
+| [PROXY_HOST_PORT](https://app.nstproxy.com/register?i=4T11hl)                           | 代理服务器及端口(协议:HTTP 格式: host:port)   默认优先使用                                         |
+| [PROXY_USERNAME_PASSWORD](https://app.nstproxy.com/register?i=4T11hl)                   | 代理用户名及密码(协议:HTTP 格式: username:password  ***为自定义字符)   默认优先使用                      | 
+| [PROXY_IPV6_HOST_PORT](https://app.nstproxy.com/register?i=4T11hl)                      | IPV6代理服务器及端口(同代理服务器及端口)                                                          |                                         
+| [PROXY_IPV6_USERNAME_PASSWORD](https://app.nstproxy.com/register?i=4T11hl)              | IPV6代理用户名及密码(同代理用户名及密码)                                                          |     
+| [PROXY_API](https://app.nstproxy.com/register?i=4T11hl)                                 | 代理提取API链接(协议:HTTP 分隔:换行 文本格式:TXT 代理格式: host:port 或 username:password@host:port ) |                                                  
+| [PROXY_IPV6_API](https://app.nstproxy.com/register?i=4T11hl)                            | IPV6代理提取API链接(协议/分隔/文本格式/代理格式同PROXY_API)                                         |
 | DISABLE_PROXY                                                                           | 禁用代理的项目名称，多个项目使用&连接                                                              |
 | DELAY_MIN                                                                               | 任务启动随机延迟最小数(默认300，单位秒)                                                           |
 | DELAY_MAX                                                                               | 任务启动随机延迟最大数(默认1800，单位秒)                                                          |
 | DISABLE_DELAY                                                                           | 关闭随机延迟的项目名称，多个项目使用&连接                                                            |
-| [YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)                                      | 人机验证解决方案                                                                         |
-| [CAPTCHA_RUN_KEY](https://captcha.run/sso?inviter=4a6c9794-4159-4588-8686-f80958b6018c) | 人机验证解决方案                                                                         |
+| [YES_CAPTCHA_KEY](https://yescaptcha.com/i/iwRpT7)                                      | 人机验证解决方案，用户KEY                                                                   |                                                  
+| [CAPTCHA_RUN_KEY](https://captcha.run/sso?inviter=4a6c9794-4159-4588-8686-f80958b6018c) | 人机验证解决方案，用户KEY                                                                   |                                                  
 
 ### 项目环境变量
 
@@ -75,7 +79,7 @@ ql repo https://github.com/Xiaobooooo/xiaobo-task-public.git "" task|util|notify
 | 语言     | 模块名           | 推荐版本      | 
 |--------|---------------|-----------|
 | Python | python-dotenv | 1.0.1 及以上 |
-| Python | loguru        | 0.7.2 及以上 |
-| Python | curl_cffi     | 0.7.2 及以上 |
-| Python | web3          | 7.3.0 及以上 |
+| Python | loguru        | 0.7.3 及以上 |
+| Python | curl_cffi     | 0.7.4 及以上 |
+| Python | web3          | 7.6.1 及以上 |
 

@@ -94,20 +94,22 @@ def approve(logger, account, contract, spender):
     return result
 
 
-def swap_honey(logger, account, is_buy, value, base_bera_value):
+def swap(logger, account, is_buy, value, base_bera_value, base_address=HONEY_ADDRESS, decimals=18):
     if is_buy:
-        info = "HONEY TO BERA"
+        info = "TOKEN TO BERA"
         receive = int(value * base_bera_value * 0.9)
     else:
-        info = "BERA TO HONEY"
+        info = "BERA TO TOKEN"
         receive = int(value / base_bera_value * 0.9)
+        if decimals != 18:
+            receive = int(receive / ((18 - decimals) ** 10))
 
     logger.info(info)
     params = {
-        'poolIdx': 36000,
-        'base': HONEY_ADDRESS,
+        'poolIdx': 36000 if base_address == HONEY_ADDRESS else 36001,
+        'base': base_address,
         'quote': '0x0000000000000000000000000000000000000000',
-        'isBuy': is_buy,
+        'isBuy': is_buy
     }
     method = BEX_SWAP_CONTRACT.functions.multiSwap([params], value, receive)
     gas_price = int(BERA.eth.gas_price * 1.2)
@@ -127,10 +129,10 @@ def swap_honey(logger, account, is_buy, value, base_bera_value):
     return result
 
 
-def query_pool():
+def query_pool(address):
     name = '查询Pool'
     url = 'https://api.goldsky.com/api/public/project_clq1h5ct0g4a201x18tfte5iv/subgraphs/bgt-subgraph/v1000000/gn'
-    payload = {"operationName": "GetPoolList", "variables": {"shareAddress": "0xd28d852cbcc68dcec922f6d5c7a8185dbaa104b7"},
+    payload = {"operationName": "GetPoolList", "variables": {"shareAddress": address.lower()},
                "query": "query GetPoolList($shareAddress: String) {\n  pools(where: {shareAddress_: {address_contains: $shareAddress}}) {\n    id\n    poolIdx\n    base\n    quote\n    timeCreate\n    tvlUsd\n    baseAmount\n    quoteAmount\n    bgtApy\n    template {\n      feeRate\n      __typename\n    }\n    baseInfo {\n      id\n      address\n      symbol\n      name\n      decimals\n      usdValue\n      beraValue\n      __typename\n    }\n    quoteInfo {\n      id\n      address\n      symbol\n      name\n      decimals\n      usdValue\n      beraValue\n      __typename\n    }\n    shareAddress {\n      address\n      __typename\n    }\n    latestPoolDayData {\n      tvlUsd\n      feesUsd\n      volumeUsd\n      __typename\n    }\n    vault {\n      id\n      vaultAddress\n      __typename\n    }\n    __typename\n  }\n}"}
     res = LOCAL.session.post(url, json=payload)
     if res.text.count('pools'):
@@ -163,7 +165,7 @@ class Task(QLTask):
         LOCAL.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
         })
-        pool = query_pool()
+        pool = query_pool(HONEY_ADDRESS)
         base_bera_value = float(pool.get('baseInfo').get('beraValue'))
         quote_usd_value = float(pool.get('quoteInfo').get('usdValue'))
 
@@ -181,11 +183,8 @@ class Task(QLTask):
                 allowance_amount = HONEY_CONTRACT.functions.allowance(account.address, BEX_SWAP_ADDRESS).call()
                 if token_balance > allowance_amount and not approve(logger, account, HONEY_CONTRACT, BEX_SWAP_ADDRESS):
                     return
-                swap_honey(logger, account, is_buy, token_balance, base_bera_value)
+                swap(logger, account, is_buy, token_balance, base_bera_value)
             else:
-                if balance < Web3.to_wei(0.01, 'ether'):
-                    logger.warning('BERA余额低于0.001，不进行BERA TO HONEY')
-                    return
                 if balance <= Web3.to_wei(0.05, 'ether'):
                     random_value = 0.01
                 elif balance <= Web3.to_wei(0.1, 'ether'):
@@ -196,7 +195,7 @@ class Task(QLTask):
                     random_value = random.uniform(0.1, 0.3)
                 random_value_ether = Web3.to_wei(random_value, 'ether')
 
-                if swap_honey(logger, account, is_buy, random_value_ether, base_bera_value):
+                if swap(logger, account, is_buy, random_value_ether, base_bera_value):
                     balance = BERA.eth.get_balance(account.address)
                     logger.info(f'BERA Balance: {Web3.from_wei(balance, "ether")}')
                     token_balance = HONEY_CONTRACT.functions.balanceOf(account.address).call()

@@ -52,10 +52,10 @@ def get_proxy(task_name: str, use_ipv6: bool = False, is_tg: bool = False) -> [s
     if use_ipv6:
         host_port = os.getenv(f'TG_{ENV_PROXY_IPV6_HOST_PORT}' if is_tg else ENV_PROXY_IPV6_HOST_PORT)
         username_password = os.getenv(f'TG_{ENV_PROXY_IPV6_USERNAME_PASSWORD}' if is_tg else ENV_PROXY_IPV6_USERNAME_PASSWORD)
-    if not host_port or not username_password:
+    if not host_port:
         host_port = os.getenv(f'TG_{ENV_PROXY_HOST_PORT}' if is_tg else ENV_PROXY_HOST_PORT)
         username_password = os.getenv(f'TG_{ENV_PROXY_USERNAME_PASSWORD}' if is_tg else ENV_PROXY_USERNAME_PASSWORD)
-    if not host_port or not username_password:
+    if not host_port:
         base_logger.info("未设置代理")
     return host_port, username_password
 
@@ -116,6 +116,25 @@ def get_delay_max() -> int:
         return int(value)
     base_logger.info(f"暂未设置最大延迟或最设置有误，设置默认最大延迟{DELAY_MAX}")
     return DELAY_MAX
+
+
+def get_proxy_by_host_port(host_port: str, username_password: str = None, session: str = '') -> str:
+    """
+    提取代理
+    :param host_port: 代理 服务器:端口
+    :param username_password: 代理 用户名:密码
+    :param session: 代理session
+    :return:
+    """
+    if not host_port:
+        return ''
+    if username_password:
+        if not session:
+            session = ''
+        session = session.replace('@', '').replace(':', '')
+        return f'{username_password.replace("***", f"{session}")}@{host_port}'
+    else:
+        return host_port
 
 
 def get_proxy_by_api(api_url: str, logger, _proxies: list) -> str:
@@ -263,8 +282,8 @@ class QLTask(BaseTask):
         datas = self.lines[index].strip().split("----")
         for try_num in range(1, self.max_try + 1):
             logger.info(f"第{try_num}次运行任务: {datas[0]}")
-            if self.proxy_host_port and self.proxy_username_password:
-                proxy = f'{self.proxy_username_password.replace("***", f"{datas[0]}{try_num}")}@{self.proxy_host_port}'
+            if self.proxy_host_port:
+                proxy = get_proxy_by_host_port(self.proxy_host_port, self.proxy_username_password, datas[0])
             else:
                 proxy = get_proxy_by_api(self.proxy_api, logger, self.proxies)
             if proxy:

@@ -1,6 +1,6 @@
 """
 name: BERA_BexSwap
-cron: 0 10,20 * * *
+cron: 0 13 * * *
 """
 import math
 import os
@@ -52,14 +52,19 @@ TOKEN_ABI = [{"constant": True, "inputs": [{"name": "_owner", "type": "address"}
                          {"internalType": "address", "name": "spender", "type": "address"}], "name": "allowance",
               "outputs": [{"internalType": "uint256", "name": "result", "type": "uint256"}], "stateMutability": "view",
               "type": "function"}]
-
 HONEY_ADDRESS = Web3.to_checksum_address("0x0E4aaF1351de4c0264C5c7056Ef3777b41BD8e03")
 HONEY_CONTRACT = BERA.eth.contract(address=Web3.to_checksum_address(HONEY_ADDRESS), abi=TOKEN_ABI)
-
 HONEY_WBERA_LP_ADDRESS = Web3.to_checksum_address("0xd28d852cbcc68dcec922f6d5c7a8185dbaa104b7")
 HONEY_WBERA_LP_CONTRACT = BERA.eth.contract(address=Web3.to_checksum_address(HONEY_WBERA_LP_ADDRESS), abi=TOKEN_ABI)
 
+LP_DEPOSIT_ABI = [{"constant": True, "inputs": [{"name": "_owner", "type": "address"}], "name": "balanceOf",
+                   "outputs": [{"name": "", "type": "uint256"}], "payable": False, "stateMutability": "view", "type": "function"},
+                  {"type": "function", "name": "stake", "inputs": [{"name": "amount", "type": "uint256", "internalType": "uint256"}],
+                   "outputs": [], "stateMutability": "nonpayable"},
+                  {"type": "function", "name": "withdraw", "inputs": [{"name": "amount", "type": "uint256", "internalType": "uint256"}],
+                   "outputs": [], "stateMutability": "nonpayable"}]
 LP_DEPOSIT_ADDRESS = Web3.to_checksum_address("0xAD57d7d39a487C04a44D3522b910421888Fb9C6d")
+LP_DEPOSIT_CONTRACT = BERA.eth.contract(address=Web3.to_checksum_address(LP_DEPOSIT_ADDRESS), abi=LP_DEPOSIT_ABI)
 
 
 def confirm_transaction(transaction):
@@ -163,9 +168,12 @@ class Task(QLTask):
 
         LOCAL.session = get_session(proxy)
         LOCAL.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+            'Host': 'api.goldsky.com',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+            'Content-Type': 'application/json',
+            'Origin': 'https://bartio.bex.berachain.com'
         })
-        pool = query_pool(HONEY_ADDRESS)
+        pool = query_pool(HONEY_WBERA_LP_ADDRESS)
         base_bera_value = float(pool.get('baseInfo').get('beraValue'))
         quote_usd_value = float(pool.get('quoteInfo').get('usdValue'))
 
@@ -175,10 +183,36 @@ class Task(QLTask):
         if balance < Web3.to_wei(0.005, 'ether'):
             logger.warning('BERA余额低于0.005，不进行Swap')
             return
-        token_balance = HONEY_CONTRACT.functions.balanceOf(account.address).call()
-        logger.info(f'HONEY Balance: {Web3.from_wei(token_balance, "ether")}')
-        is_buy = token_balance > Web3.to_wei(2, "ether")
+
         try:
+            lp_balance = HONEY_WBERA_LP_CONTRACT.functions.balanceOf(account.address).call()
+            logger.info(f'LP Balance: {Web3.from_wei(lp_balance, "ether")}')
+            if lp_balance > 0:
+                logger.info(f"撤回流动性HONEY_WBERA")
+                min_value = d(quote_usd_value * (1 - (0.75 / 100)))
+                max_value = d(quote_usd_value * (1 + (0.75 / 100)))
+                types = ["uint8", "address", "address", "uint24", "int24", "int24", "uint128", "uint128", "uint128", "uint8", "address"]
+                params = [4, HONEY_ADDRESS, '0x7507c1dc16935b82698e4c63f2746a2fcf994df8', 36000, 0, 0, lp_balance, min_value, max_value,
+                          0, HONEY_WBERA_LP_ADDRESS]
+                method = BEX_POOL_CONTRACT.functions.userCmd(128, encode(types, params))
+                gas_price = int(BERA.eth.gas_price * 1.2)
+                nonce = BERA.eth.get_transaction_count(account.address)
+                tx = method.build_transaction(
+                    {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce, 'gas': 2000000}
+                )
+                signed_tx = BERA.eth.account.sign_transaction(tx, account.key)
+                transaction = BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
+                logger.info(f'撤回流动性交易发送成功: 0x{transaction.hex()}')
+                result = confirm_transaction(transaction)
+                if not result:
+                    logger.error(f'撤回流动性交易确认失败: 0x{transaction.hex()}')
+                else:
+                    logger.success(f'撤回流动性交易确认成功: 0x{transaction.hex()}')
+
+            token_balance = HONEY_CONTRACT.functions.balanceOf(account.address).call()
+            logger.info(f'HONEY Balance: {Web3.from_wei(token_balance, "ether")}')
+            is_buy = token_balance > Web3.to_wei(2, "ether")
+
             if is_buy:
                 allowance_amount = HONEY_CONTRACT.functions.allowance(account.address, BEX_SWAP_ADDRESS).call()
                 if token_balance > allowance_amount and not approve(logger, account, HONEY_CONTRACT, BEX_SWAP_ADDRESS):
@@ -231,6 +265,26 @@ class Task(QLTask):
                         logger.error(f'添加流动性交易确认失败: 0x{transaction.hex()}')
                     else:
                         logger.success(f'添加流动性交易确认成功: 0x{transaction.hex()}')
+
+                    staked_lp_balance = HONEY_WBERA_LP_CONTRACT.functions.balanceOf(account.address).call()
+                    logger.info(f'Staked LP Balance: {Web3.from_wei(lp_balance, "ether")}')
+                    if staked_lp_balance > 0:
+                        logger.info(f"解质押HONEY_WBERA流动性")
+                        gas_price = int(BERA.eth.gas_price * 1.2)
+                        nonce = BERA.eth.get_transaction_count(account.address)
+                        method = LP_DEPOSIT_CONTRACT.functions.withdraw(staked_lp_balance)
+                        tx = method.build_transaction(
+                            {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce, 'gas': 2000000}
+                        )
+                        signed_tx = BERA.eth.account.sign_transaction(tx, account.key)
+                        transaction = BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
+                        logger.info(f'解质押流动性交易发送成功: 0x{transaction.hex()}')
+                        result = confirm_transaction(transaction)
+                        if not result:
+                            logger.error(f'解质押流动性交易确认失败: 0x{transaction.hex()}')
+                        else:
+                            logger.success(f'解质押流动性交易确认成功: 0x{transaction.hex()}')
+
                     lp_balance = HONEY_WBERA_LP_CONTRACT.functions.balanceOf(account.address).call()
                     logger.info(f'LP Balance: {Web3.from_wei(lp_balance, "ether")}')
                     if lp_balance > 0:
@@ -240,11 +294,10 @@ class Task(QLTask):
                         logger.info(f"质押HONEY_WBERA流动性")
                         gas_price = int(BERA.eth.gas_price * 1.2)
                         nonce = BERA.eth.get_transaction_count(account.address)
-                        tx = {
-                            'from': account.address, 'to': LP_DEPOSIT_ADDRESS, 'value': 0, 'nonce': nonce, 'gas': 2000000,
-                            'data': f'0xa694fc3a{Web3.to_hex(lp_balance).replace("0x", "").zfill(64)}',
-                            'maxFeePerGas': gas_price, 'maxPriorityFeePerGas': gas_price, 'chainId': BERA.eth.chain_id
-                        }
+                        method = LP_DEPOSIT_CONTRACT.functions.stake(int(lp_balance / 2))
+                        tx = method.build_transaction(
+                            {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce, 'gas': 2000000}
+                        )
                         signed_tx = BERA.eth.account.sign_transaction(tx, account.key)
                         transaction = BERA.eth.send_raw_transaction(signed_tx.raw_transaction)
                         logger.info(f'质押流动性交易发送成功: 0x{transaction.hex()}')
@@ -253,6 +306,7 @@ class Task(QLTask):
                             logger.error(f'质押流动性交易确认失败: 0x{transaction.hex()}')
                         else:
                             logger.success(f'质押流动性交易确认成功: 0x{transaction.hex()}')
+
         except ContractLogicError as e:
             logger.error(f'合约调用失败: {e}')
             return

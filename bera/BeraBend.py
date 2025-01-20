@@ -155,8 +155,11 @@ class Task(QLTask):
             if balance < Web3.to_wei(0.005, 'ether'):
                 logger.warning('BERA余额低于0.005，不进行操作')
                 return
+
             account_data = BEND_CONTRACT.functions.getUserAccountData(account.address).call()
-            repay_amount = (account_data[1] - 2) * (10 ** 10)
+            honey_balance = HONEY_CONTRACT.functions.balanceOf(account.address).call()
+            logger.info(f'HONEY Balance: {Web3.from_wei(honey_balance, "ether")}')
+            repay_amount = min(honey_balance, account_data[1] * (10 ** 10))
             if repay_amount > 0:
                 repay(logger, account, repay_amount)
 

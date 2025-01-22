@@ -62,8 +62,7 @@ class Task(QLTask):
                 logger.info("HDAI TO ETH")
                 hex_value = Web3.to_hex(token_balance).replace('0x', '')
                 timestamp = int(time.time() + 60 * 60 * 24 * 365)
-                sig_deadline = int(time.time() + 60 * 60 * 24 * 180)
-                sign_nonce = random.randint(6666, 888888888)
+                sig_nonce = 1
                 message = encode_typed_data(full_message={"types": {
                     "PermitSingle": [{"name": "details", "type": "PermitDetails"}, {"name": "spender", "type": "address"},
                                      {"name": "sigDeadline", "type": "uint256"}],
@@ -71,15 +70,15 @@ class Task(QLTask):
                                       {"name": "expiration", "type": "uint48"}, {"name": "nonce", "type": "uint48"}],
                     "EIP712Domain": [{"name": "name", "type": "string"}, {"name": "chainId", "type": "uint256"},
                                      {"name": "verifyingContract", "type": "address"}]},
-                    "domain": {"name": "Permit2", "chainId": "743111",
-                               "verifyingContract": "0xb952578f3520ee8ea45b7914994dcf4702cee578"},
-                    "primaryType": "PermitSingle", "message": {
-                        "details": {"token": "0xec46e0efb2ea8152da0327a5eb3ff9a43956f13e",
-                                    "amount": "1461501637330902918203684832716283019655932542975", "expiration": timestamp,
-                                    "nonce": sign_nonce}, "spender": "0xa18019e62f266c2e17e33398448e4105324e0d0f",
-                        "sigDeadline": sig_deadline}})
+                    "domain": {"name": "Permit2", "chainId": "743111", "verifyingContract": "0xb952578f3520ee8ea45b7914994dcf4702cee578"},
+                    "primaryType": "PermitSingle", "message": {"details": {"token": "0xec46e0efb2ea8152da0327a5eb3ff9a43956f13e",
+                                                                           "amount": "1461501637330902918203684832716283019655932542975",
+                                                                           "expiration": timestamp, "nonce": sig_nonce},
+                                                               "spender": "0xa18019e62f266c2e17e33398448e4105324e0d0f",
+                                                               "sigDeadline": timestamp}})
+
                 signature = HEMI.eth.account.sign_message(message, private_key)
-                bytes_1 = f"0x{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '').zfill(64)}000000000000000000000000ffffffffffffffffffffffffffffffffffffffff{Web3.to_hex(timestamp).replace('0x', '').zfill(64)}{Web3.to_hex(sign_nonce).replace('0x', '').zfill(64)}000000000000000000000000a18019e62f266c2e17e33398448e4105324e0d0f{Web3.to_hex(sig_deadline).replace('0x', '').zfill(64)}00000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000041{signature.signature.hex()}00000000000000000000000000000000000000000000000000000000000000"
+                bytes_1 = f"0x{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '').zfill(64)}000000000000000000000000ffffffffffffffffffffffffffffffffffffffff{Web3.to_hex(timestamp).replace('0x', '').zfill(64)}{Web3.to_hex(sig_nonce).replace('0x', '').zfill(64)}000000000000000000000000a18019e62f266c2e17e33398448e4105324e0d0f{Web3.to_hex(timestamp).replace('0x', '').zfill(64)}00000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000000041{signature.signature.hex()}00000000000000000000000000000000000000000000000000000000000000"
                 bytes_2 = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002b{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}002710{WETH_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
                 bytes_3 = f"0x0000000000000000000000000000000000000000000000000000000000000001{'0'.zfill(64)}"
                 execute = CONTRACT.functions.execute("0x0a000c", (bytes_1, bytes_2, bytes_3), int(time.time() + 600))
@@ -96,7 +95,7 @@ class Task(QLTask):
                             {'from': account.address, 'value': 0, 'gasPrice': gas_price, 'nonce': nonce}
                         )
                     elif repr(e).count("0x756688fe") or repr(e).count("0x815e1d64"):
-                        bytes_1 = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002b{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}000bb8{WETH_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
+                        bytes_1 = f"0x0000000000000000000000000000000000000000000000000000000000000002{hex_value.zfill(64)}{'0'.zfill(64)}00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002b{TOKEN_CONTRACT_ADDRESS.lower().replace('0x', '')}002710{WETH_ADDRESS.lower().replace('0x', '')}000000000000000000000000000000000000000000"
                         bytes_2 = f"0x0000000000000000000000000000000000000000000000000000000000000001{'0'.zfill(64)}"
                         execute = CONTRACT.functions.execute("0x000c", (bytes_1, bytes_2), int(time.time() + 600))
                         tx = execute.build_transaction(

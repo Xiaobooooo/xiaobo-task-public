@@ -283,7 +283,7 @@ class QLTask(BaseTask):
         for try_num in range(1, self.max_try + 1):
             logger.info(f"第{try_num}次运行任务: {datas[0]}")
             if self.proxy_host_port:
-                proxy = get_proxy_by_host_port(self.proxy_host_port, self.proxy_username_password, datas[0])
+                proxy = get_proxy_by_host_port(self.proxy_host_port, self.proxy_username_password, f'{datas[0]}{try_num}')
             else:
                 proxy = get_proxy_by_api(self.proxy_api, logger, self.proxies)
             if proxy:
